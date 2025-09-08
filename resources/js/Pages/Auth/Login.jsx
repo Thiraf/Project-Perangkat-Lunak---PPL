@@ -13,14 +13,14 @@ export default function Login({ status }) {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-100">
+        <div className="min-h-screen h-screen flex flex-col bg-gray-100">
             {/* Header */}
             <div className="bg-orange-600 p-4 text-white font-bold text-lg">
                 DOKI
             </div>
 
             {/* Content */}
-            <div className="flex flex-1">
+            <div className="flex flex-1 h-full overflow-hidden">
                 {/* Left side (Form) */}
                 <div className="w-full md:w-1/2 flex items-center justify-center bg-gray-50">
                     <div className="max-w-md w-full p-8">
@@ -43,7 +43,7 @@ export default function Login({ status }) {
                             <div>
                                 <input
                                     type="email"
-                                    placeholder="Username"
+                                    placeholder="Email"
                                     value={data.email}
                                     onChange={(e) =>
                                         setData("email", e.target.value)
@@ -106,11 +106,11 @@ export default function Login({ status }) {
                 </div>
 
                 {/* Right side (Image) */}
-                <div className="hidden md:block md:w-1/2">
+        <div className="hidden md:block md:w-1/2 h-full">
                     <img
-                        src="/images/login-bg.png"
-                        alt="Login background"
-                        className="w-full h-full object-cover"
+            src="/images/login-bg.png"
+            alt="Login background"
+            className="w-full h-full object-cover"
                     />
                 </div>
             </div>

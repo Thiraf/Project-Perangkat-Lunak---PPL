@@ -3,8 +3,9 @@ import { MoreVertical, Share2, Edit, Trash } from "lucide-react";
 import ModalShare from "./ModalShare";
 import ModalEdit from "./ModalEdit";
 import ModalDelete from "./ModalDelete";
+import axios from "axios";
 
-export default function ActionMenu({ name, onRename, onDelete }) {
+export default function ActionMenu({ id, name, onRename, onDelete }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
@@ -76,8 +77,13 @@ export default function ActionMenu({ name, onRename, onDelete }) {
                 isOpen={editOpen}
                 onClose={() => setEditOpen(false)}
                 initialName={name}
-                onSave={(newName) => {
-                    if (onRename) onRename(newName);
+                onSave={async (newName) => {
+                    try {
+                        await axios.patch(`/items/${id}`, { name: newName });
+                        if (onRename) onRename(newName);
+                    } catch (err) {
+                        alert("Failed to rename item: " + (err.response?.data?.message || err.message));
+                    }
                 }}
             />
 
@@ -85,8 +91,14 @@ export default function ActionMenu({ name, onRename, onDelete }) {
                 isOpen={deleteOpen}
                 onClose={() => setDeleteOpen(false)}
                 name={name}
-                onConfirm={() => {
-                    if (onDelete) onDelete(name);
+                onConfirm={async () => {
+                    console.log("Deleting item with id:", id);
+                    try {
+                        await axios.delete(`/items/${id}`);
+                        if (onDelete) onDelete(id);
+                    } catch (err) {
+                        alert("Failed to delete item: " + (err.response?.data?.message || err.message));
+                    }
                 }}
             />
         </div>

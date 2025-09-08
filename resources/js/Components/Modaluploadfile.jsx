@@ -1,7 +1,8 @@
 import { useState } from "react";
+import axios from "axios";
 import Dropzone from "@/Components/Dropzone";
 
-export default function ModalNewFile({ isOpen, onClose }) {
+export default function ModalNewFile({ isOpen, onClose, onSaved }) {
     const [fileName, setFileName] = useState("");
     const [labels, setLabels] = useState([]);
     const [file, setFile] = useState(null);
@@ -9,13 +10,28 @@ export default function ModalNewFile({ isOpen, onClose }) {
 
     if (!isOpen) return null;
 
-    const handleSave = () => {
-        console.log({
-            fileName,
-            labels,
-            file,
-        });
-        onClose();
+    const handleSave = async () => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append("name", fileName || file.name);
+        formData.append("type", "file");
+        formData.append("file", file);
+        // Optionally add parent_id if needed
+        try {
+            await axios.post("/items", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            setFileName("");
+            setLabels([]);
+            setFile(null);
+            setInput("");
+            onClose();
+            if (onSaved) onSaved();
+        } catch (err) {
+            alert("Upload failed: " + (err.response?.data?.message || err.message));
+        }
     };
 
     const handleKeyDown = (e) => {
@@ -88,7 +104,7 @@ export default function ModalNewFile({ isOpen, onClose }) {
                         onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
                     />
                     {file && (
-                        <p className="mt-2 text-sm text-gray-600">
+                        <p className="mt-2 text-sm text-green-600 font-semibold">
                             Selected: {file.name} (
                             {Math.round(file.size / 1024)} KB)
                         </p>

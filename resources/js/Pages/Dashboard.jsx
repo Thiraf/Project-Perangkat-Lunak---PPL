@@ -1,12 +1,15 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import { useState, useEffect } from "react";
+import axios from "axios";
+import dayjs from "dayjs";
 import CustomSelect from "@/Components/CustomSelect";
 import Dropzone from "@/Components/Dropzone";
 import ModalNewFolder from "@/Components/Modalnewfolder";
 import ModalUploadFile from "@/Components/Modaluploadfile";
 import FolderCard from "@/Components/FolderCard";
 import FileRow from "@/Components/FileRow";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Dashboard({ auth }) {
     const [label, setLabel] = useState("");
@@ -17,39 +20,9 @@ export default function Dashboard({ auth }) {
     const [showModalNewFolder, setshowModalNewFolder] = useState(false);
     const [showModalUploadFile, setShowModalUploadFile] = useState(false);
 
-    const folders = [
-        { id: 1, name: "Business Memo" },
-        { id: 2, name: "Business Plan" },
-        { id: 3, name: "Business Trip" },
-        { id: 4, name: "Business Review" },
-    ];
-
-    const files = [
-        {
-            id: 1,
-            name: "Data Stok 2025.csv",
-            type: "csv",
-            owner: "Me",
-            modified: "Sep 1, 2025",
-            size: "11 MB",
-        },
-        {
-            id: 2,
-            name: "Laporan.docx",
-            type: "docx",
-            owner: "Me",
-            modified: "Jun 18, 2025",
-            size: "8 MB",
-        },
-        {
-            id: 3,
-            name: "Proposal.pdf",
-            type: "pdf",
-            owner: "Me",
-            modified: "Feb 20, 2025",
-            size: "23 MB",
-        },
-    ];
+    const [folders, setFolders] = useState([]);
+    const [files, setFiles] = useState([]);
+    const [sortOrder, setSortOrder] = useState("desc");
 
     useEffect(() => {
         if (newItem === "newfolder") {
@@ -60,6 +33,18 @@ export default function Dashboard({ auth }) {
             setNewItem("");
         }
     }, [newItem]);
+
+    useEffect(() => {
+        axios.get("/items")
+            .then((res) => {
+                const items = res.data;
+                setFolders(items.filter((item) => item.type === "folder"));
+                setFiles(items.filter((item) => item.type === "file"));
+            })
+            .catch((err) => {
+                console.error("Failed to fetch items:", err);
+            });
+    }, []);
 
     return (
         <AuthenticatedLayout user={auth.user}>
@@ -174,15 +159,57 @@ export default function Dashboard({ auth }) {
                         <tr className="bg-gray-100 text-gray-700">
                             <th className="py-2 px-3">Files</th>
                             <th className="py-2 px-3">Owner</th>
-                            <th className="py-2 px-3">Last Modified</th>
+                            <th className="py-2 px-3 cursor-pointer select-none" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>Last Modified {sortOrder === "desc" ? <ChevronDown className="inline w-4 h-4" /> : <ChevronUp className="inline w-4 h-4" />}</th>
                             <th className="py-2 px-3">File Size</th>
                             <th className="py-2 px-3"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        {files.map((file) => (
-                            <FileRow key={file.id} {...file} />
-                        ))}
+                        {[...files]
+                            .sort((a, b) => {
+                                const dateA = new Date(a.updated_at || a.created_at);
+                                const dateB = new Date(b.updated_at || b.created_at);
+                                return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+                            })
+                            .map((file) => {
+                                const isMe = file.owner_id === auth.user.id;
+                                const ownerName = isMe ? "me" : (file.owner_name || `User ${file.owner_id}`);
+                                const fileDate = dayjs(file.updated_at || file.created_at);
+                                let modifiedDisplay;
+                                if (fileDate.isSame(dayjs(), 'day')) {
+                                    modifiedDisplay = `${fileDate.format('h:mm A')} ${ownerName}`;
+                                } else {
+                                    modifiedDisplay = `${fileDate.format('MMM DD, YYYY')} ${ownerName}`;
+                                }
+                                return (
+                                    <FileRow
+                                        key={file.id}
+                                        id={file.id}
+                                        name={file.name}
+                                        type={file.mime_type ? file.mime_type.split('/')[1] : ''}
+                                        owner={ownerName}
+                                        modified={modifiedDisplay}
+                                        size={file.size ? `${Math.round(file.size / 1024)} KB` : ''}
+                                        path={file.path}
+                                        onDelete={() => {
+                                            axios.get("/items")
+                                                .then((res) => {
+                                                    const items = res.data;
+                                                    setFolders(items.filter((item) => item.type === "folder"));
+                                                    setFiles(items.filter((item) => item.type === "file"));
+                                                });
+                                        }}
+                                        onRename={() => {
+                                            axios.get("/items")
+                                                .then((res) => {
+                                                    const items = res.data;
+                                                    setFolders(items.filter((item) => item.type === "folder"));
+                                                    setFiles(items.filter((item) => item.type === "file"));
+                                                });
+                                        }}
+                                    />
+                                );
+                            })}
                     </tbody>
                 </table>
             </div>
@@ -197,6 +224,15 @@ export default function Dashboard({ auth }) {
             <ModalUploadFile
                 isOpen={showModalUploadFile}
                 onClose={() => setShowModalUploadFile(false)}
+                onSaved={() => {
+                    // Refresh items after upload
+                    axios.get("/items")
+                        .then((res) => {
+                            const items = res.data;
+                            setFolders(items.filter((item) => item.type === "folder"));
+                            setFiles(items.filter((item) => item.type === "file"));
+                        });
+                }}
             />
         </AuthenticatedLayout>
     );

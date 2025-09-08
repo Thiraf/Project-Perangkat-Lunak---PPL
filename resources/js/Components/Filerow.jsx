@@ -1,6 +1,6 @@
 import ActionMenu from "@/Components/ActionMenu";
 
-export default function FileRow({ id, name, type, owner, modified, size }) {
+export default function FileRow({ id, name, type, owner, modified, size, onDelete, onRename }) {
     return (
         <tr className="border-b hover:bg-gray-50">
             <td className="py-2 px-3 flex items-center space-x-2">
@@ -15,7 +15,7 @@ export default function FileRow({ id, name, type, owner, modified, size }) {
             <td className="py-2 px-3">{modified}</td>
             <td className="py-2 px-3">{size}</td>
             <td className="py-2 px-3">
-                <ActionMenu name={name} />
+                <ActionMenu id={id} name={name} onDelete={onDelete} onRename={onRename} />
             </td>
         </tr>
     );

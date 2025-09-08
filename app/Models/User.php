@@ -45,4 +45,20 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    
+    public function items()
+    {
+        return $this->hasMany(Item::class, 'owner_id');
+    }
+
+    public function labels()
+    {
+        return $this->hasMany(Label::class);
+    }
+
+    public function sharedItems()
+    {
+        return $this->belongsToMany(Item::class, 'shares')->withPivot('permission')->withTimestamps();
+    }
+    
 }

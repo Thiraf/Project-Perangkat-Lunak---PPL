@@ -23,6 +23,7 @@
         "vite": "^7.0.4"
     },
     "dependencies": {
+        "dayjs": "^1.11.18",
         "lucide-react": "^0.542.0"
     }
 }
