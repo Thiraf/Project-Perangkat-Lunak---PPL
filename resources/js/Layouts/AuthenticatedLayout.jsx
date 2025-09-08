@@ -12,7 +12,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="flex-1 flex flex-col">
-            <header className="bg-orange-500 shadow px-6 py-4 flex items-center justify-between text-white">
+            <header className="bg-[#F05A27] shadow px-6 py-4 flex items-center justify-between text-white">
                 <div className="flex items-center space-x-3">
                     <span className="font-bold text-4xl">DOKI</span>
                 </div>

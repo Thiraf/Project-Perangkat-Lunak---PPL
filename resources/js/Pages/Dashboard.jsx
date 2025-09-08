@@ -1,6 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 import CustomSelect from "@/Components/CustomSelect";
@@ -9,6 +9,8 @@ import ModalNewFolder from "@/Components/Modalnewfolder";
 import ModalUploadFile from "@/Components/Modaluploadfile";
 import FolderCard from "@/Components/FolderCard";
 import FileRow from "@/Components/FileRow";
+import AlertMessage from "@/Components/AlertMessage";
+import LoadingOverlay from "@/Components/LoadingOverlay";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Dashboard({ auth }) {
@@ -23,6 +25,28 @@ export default function Dashboard({ auth }) {
     const [folders, setFolders] = useState([]);
     const [files, setFiles] = useState([]);
     const [sortOrder, setSortOrder] = useState("desc");
+    const [isLoading, setIsLoading] = useState(false);
+    const [alert, setAlert] = useState({ show: false, message: "", type: "success" });
+
+    const fetchItems = useCallback((alertMsg = null) => {
+        setIsLoading(true);
+        axios.get("/items")
+            .then((res) => {
+                const items = res.data;
+                setFolders(items.filter((item) => item.type === "folder"));
+                setFiles(items.filter((item) => item.type === "file"));
+                if (alertMsg) {
+                    setAlert({ show: true, message: alertMsg, type: "success" });
+                }
+            })
+            .catch((err) => {
+                console.error("Failed to fetch items:", err);
+                setAlert({ show: true, message: "An error occurred.", type: "error" });
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, []);
 
     useEffect(() => {
         if (newItem === "newfolder") {
@@ -35,20 +59,19 @@ export default function Dashboard({ auth }) {
     }, [newItem]);
 
     useEffect(() => {
-        axios.get("/items")
-            .then((res) => {
-                const items = res.data;
-                setFolders(items.filter((item) => item.type === "folder"));
-                setFiles(items.filter((item) => item.type === "file"));
-            })
-            .catch((err) => {
-                console.error("Failed to fetch items:", err);
-            });
-    }, []);
+        fetchItems();
+    }, [fetchItems]);
 
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Dashboard" />
+            {isLoading && <LoadingOverlay />}
+            <AlertMessage
+                show={alert.show}
+                message={alert.message}
+                type={alert.type}
+                onClose={() => setAlert({ ...alert, show: false })}
+            />
             <h2 className="text-4xl font-semibold">Document</h2>
 
             <div className="mt-6">
@@ -150,22 +173,8 @@ export default function Dashboard({ auth }) {
                         <FolderCard 
                             id={folder.id} 
                             name={folder.name}
-                            onDelete={() => {
-                                axios.get("/items")
-                                    .then((res) => {
-                                        const items = res.data;
-                                        setFolders(items.filter((item) => item.type === "folder"));
-                                        setFiles(items.filter((item) => item.type === "file"));
-                                    });
-                            }}
-                            onRename={() => {
-                                axios.get("/items")
-                                    .then((res) => {
-                                        const items = res.data;
-                                        setFolders(items.filter((item) => item.type === "folder"));
-                                        setFiles(items.filter((item) => item.type === "file"));
-                                    });
-                            }} 
+                            onDelete={() => fetchItems("Folder deleted successfully")}
+                            onRename={() => fetchItems("Folder renamed successfully")}
                         />
                     ))}
                 </div>
@@ -209,22 +218,8 @@ export default function Dashboard({ auth }) {
                                         modified={modifiedDisplay}
                                         size={file.size ? `${Math.round(file.size / 1024)} KB` : ''}
                                         path={file.path}
-                                        onDelete={() => {
-                                            axios.get("/items")
-                                                .then((res) => {
-                                                    const items = res.data;
-                                                    setFolders(items.filter((item) => item.type === "folder"));
-                                                    setFiles(items.filter((item) => item.type === "file"));
-                                                });
-                                        }}
-                                        onRename={() => {
-                                            axios.get("/items")
-                                                .then((res) => {
-                                                    const items = res.data;
-                                                    setFolders(items.filter((item) => item.type === "folder"));
-                                                    setFiles(items.filter((item) => item.type === "file"));
-                                                });
-                                        }}
+                                        onDelete={() => fetchItems("File deleted successfully")}
+                                        onRename={() => fetchItems("File renamed successfully")}
                                     />
                                 );
                             })}
@@ -236,28 +231,14 @@ export default function Dashboard({ auth }) {
             <ModalNewFolder
                 isOpen={showModalNewFolder}
                 onClose={() => setshowModalNewFolder(false)}
-                onSaved={() => {
-                    axios.get("/items")
-                        .then((res) => {
-                            const items = res.data;
-                            setFolders(items.filter((item) => item.type === "folder"));
-                            setFiles(items.filter((item) => item.type === "file"));
-                        });
-                }}
+                onSaved={() => fetchItems("Folder created successfully")}
             />
 
             {/* Modal Upload File */}
             <ModalUploadFile
                 isOpen={showModalUploadFile}
                 onClose={() => setShowModalUploadFile(false)}
-                onSaved={() => {
-                    axios.get("/items")
-                        .then((res) => {
-                            const items = res.data;
-                            setFolders(items.filter((item) => item.type === "folder"));
-                            setFiles(items.filter((item) => item.type === "file"));
-                        });
-                }}
+                onSaved={() => fetchItems("File uploaded successfully")}
             />
         </AuthenticatedLayout>
     );
