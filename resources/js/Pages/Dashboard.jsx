@@ -146,8 +146,27 @@ export default function Dashboard({ auth }) {
             <div className="mt-8">
                 <h3 className="text-xl font-semibold mb-4">Folders</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {folders.map((f) => (
-                        <FolderCard key={f.id} name={f.name} />
+                    {folders.map((folder) => (
+                        <FolderCard 
+                            id={folder.id} 
+                            name={folder.name}
+                            onDelete={() => {
+                                axios.get("/items")
+                                    .then((res) => {
+                                        const items = res.data;
+                                        setFolders(items.filter((item) => item.type === "folder"));
+                                        setFiles(items.filter((item) => item.type === "file"));
+                                    });
+                            }}
+                            onRename={() => {
+                                axios.get("/items")
+                                    .then((res) => {
+                                        const items = res.data;
+                                        setFolders(items.filter((item) => item.type === "folder"));
+                                        setFiles(items.filter((item) => item.type === "file"));
+                                    });
+                            }} 
+                        />
                     ))}
                 </div>
             </div>
@@ -157,7 +176,7 @@ export default function Dashboard({ auth }) {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-gray-100 text-gray-700">
-                            <th className="py-2 px-3">Files</th>
+                            <th className="py-2 px-3">Name</th>
                             <th className="py-2 px-3">Owner</th>
                             <th className="py-2 px-3 cursor-pointer select-none" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>Last Modified {sortOrder === "desc" ? <ChevronDown className="inline w-4 h-4" /> : <ChevronUp className="inline w-4 h-4" />}</th>
                             <th className="py-2 px-3">File Size</th>
@@ -183,7 +202,6 @@ export default function Dashboard({ auth }) {
                                 }
                                 return (
                                     <FileRow
-                                        key={file.id}
                                         id={file.id}
                                         name={file.name}
                                         type={file.mime_type ? file.mime_type.split('/')[1] : ''}
@@ -218,6 +236,14 @@ export default function Dashboard({ auth }) {
             <ModalNewFolder
                 isOpen={showModalNewFolder}
                 onClose={() => setshowModalNewFolder(false)}
+                onSaved={() => {
+                    axios.get("/items")
+                        .then((res) => {
+                            const items = res.data;
+                            setFolders(items.filter((item) => item.type === "folder"));
+                            setFiles(items.filter((item) => item.type === "file"));
+                        });
+                }}
             />
 
             {/* Modal Upload File */}
@@ -225,7 +251,6 @@ export default function Dashboard({ auth }) {
                 isOpen={showModalUploadFile}
                 onClose={() => setShowModalUploadFile(false)}
                 onSaved={() => {
-                    // Refresh items after upload
                     axios.get("/items")
                         .then((res) => {
                             const items = res.data;

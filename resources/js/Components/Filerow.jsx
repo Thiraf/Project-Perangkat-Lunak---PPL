@@ -2,7 +2,7 @@ import ActionMenu from "@/Components/ActionMenu";
 
 export default function FileRow({ id, name, type, owner, modified, size, onDelete, onRename }) {
     return (
-        <tr className="border-b hover:bg-gray-50">
+        <tr className="border-b hover:bg-gray-50 border-gray-300">
             <td className="py-2 px-3 flex items-center space-x-2">
                 <img
                     src={`/images/${type}.png`}

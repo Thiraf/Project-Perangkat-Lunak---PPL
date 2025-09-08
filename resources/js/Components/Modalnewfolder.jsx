@@ -1,18 +1,35 @@
 import { useState } from "react";
+import axios from "axios";
 
-export default function ModalNewFolder({ isOpen, onClose }) {
+export default function ModalNewFolder({ isOpen, onClose, onSaved }) {
     const [folderName, setFolderName] = useState("");
     const [labels, setLabels] = useState([]);
     const [input, setInput] = useState("");
 
     if (!isOpen) return null;
 
-    const handleSave = () => {
-        console.log({
-            folderName,
-            labels,
-        });
-        onClose();
+    const handleSave = async () => {
+        if (!folderName.trim()) return;
+        const formData = new FormData();
+        formData.append("name", folderName.trim());
+        formData.append("type", "folder");
+        if (labels.length > 0) {
+            formData.append("labels", JSON.stringify(labels));
+        }
+        try {
+            await axios.post("/items", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            setFolderName("");
+            setLabels([]);
+            setInput("");
+            onClose();
+            if (onSaved) onSaved();
+        } catch (err) {
+            alert("Upload failed: " + (err.response?.data?.message || err.message));
+        }
     };
 
     const handleKeyDown = (e) => {
