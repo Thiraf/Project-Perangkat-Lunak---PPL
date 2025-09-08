@@ -1,17 +1,21 @@
-import ApplicationLogo from "@/Components/ApplicationLogo";
 import { Link, usePage } from "@inertiajs/react";
 import { useState } from "react";
+import { Search } from "lucide-react";
+
 import { Home, User, LogOut, FileText, Tag, Settings } from "lucide-react";
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     return (
         <div className="flex-1 flex flex-col">
             <header className="bg-orange-500 shadow px-6 py-4 flex items-center justify-between text-white">
-                <div>{header}</div>
+                <div className="flex items-center space-x-3">
+                    <span className="font-bold text-4xl">DOKI</span>
+                </div>
 
                 <div className="relative">
                     <button
@@ -19,11 +23,9 @@ export default function AuthenticatedLayout({ header, children }) {
                         className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-orange-600"
                     >
                         <User className="h-5 w-5 text-white" />
-
                         <span className="text-sm font-medium text-white">
                             {user.name}
                         </span>
-
                         <svg
                             className={`w-4 h-4 transform transition-transform text-white ${
                                 dropdownOpen ? "rotate-180" : "rotate-0"
@@ -66,7 +68,6 @@ export default function AuthenticatedLayout({ header, children }) {
             </header>
 
             <div className="flex min-h-screen bg-gray-100">
-                {/* Sidebar */}
                 <aside
                     className={`bg-white shadow-md transition-all duration-300 ${
                         sidebarOpen ? "w-64" : "w-20"
@@ -87,6 +88,17 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
 
                     <nav className="flex-1 px-2 space-y-2">
+                        {sidebarOpen && (
+                            <div className="relative mb-4">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                />
+                            </div>
+                        )}
+
                         <Link
                             href={route("dashboard")}
                             className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
@@ -94,13 +106,15 @@ export default function AuthenticatedLayout({ header, children }) {
                             <Home className="h-5 w-5" />
                             {sidebarOpen && <span>Dashboard</span>}
                         </Link>
+
                         <Link
-                            href={route("profile.edit")}
+                            href={route("dashboard")}
                             className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
                         >
                             <FileText className="h-5 w-5" />
                             {sidebarOpen && <span>Document</span>}
                         </Link>
+
                         <Link
                             href={route("profile.edit")}
                             className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
@@ -108,6 +122,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             <Tag className="h-5 w-5" />
                             {sidebarOpen && <span>Tag</span>}
                         </Link>
+
                         <Link
                             href={route("profile.edit")}
                             className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
@@ -115,6 +130,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             <Settings className="h-5 w-5" />
                             {sidebarOpen && <span>Setting</span>}
                         </Link>
+
                         <Link
                             href={route("profile.edit")}
                             className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
