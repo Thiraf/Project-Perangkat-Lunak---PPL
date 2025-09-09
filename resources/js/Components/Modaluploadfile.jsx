@@ -8,6 +8,14 @@ export default function ModalNewFile({ isOpen, onClose, onSaved }) {
     const [file, setFile] = useState(null);
     const [input, setInput] = useState("");
 
+    const handleClose = () => {
+        setFileName("");
+        setLabels([]);
+        setFile(null);
+        setInput("");
+        onClose();
+    };
+
     if (!isOpen) return null;
 
     const handleSave = async () => {
@@ -16,18 +24,13 @@ export default function ModalNewFile({ isOpen, onClose, onSaved }) {
         formData.append("name", fileName || file.name);
         formData.append("type", "file");
         formData.append("file", file);
-        // Optionally add parent_id if needed
         try {
             await axios.post("/items", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            setFileName("");
-            setLabels([]);
-            setFile(null);
-            setInput("");
-            onClose();
+            handleClose();
             if (onSaved) onSaved();
         } catch (err) {
             alert("Upload failed: " + (err.response?.data?.message || err.message));
@@ -113,7 +116,7 @@ export default function ModalNewFile({ isOpen, onClose, onSaved }) {
 
                 <div className="flex justify-end">
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="mr-2 px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100"
                     >
                         Cancel

@@ -79,7 +79,7 @@ class ItemController extends Controller
                        ->where('type', 'file')
                        ->exists()) 
             {
-                $finalName = $baseName . ' (' . $counter . ').' . $extension;
+                $finalName = $baseName . '(' . $counter . ').' . $extension;
                 $counter++;
             }
 

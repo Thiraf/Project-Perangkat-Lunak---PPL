@@ -6,6 +6,13 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved }) {
     const [labels, setLabels] = useState([]);
     const [input, setInput] = useState("");
 
+    const handleClose = () => {
+        setFolderName("");
+        setLabels([]);
+        setInput("");
+        onClose();
+    };
+
     if (!isOpen) return null;
 
     const handleSave = async () => {
@@ -22,10 +29,7 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved }) {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            setFolderName("");
-            setLabels([]);
-            setInput("");
-            onClose();
+            handleClose();
             if (onSaved) onSaved();
         } catch (err) {
             alert("Upload failed: " + (err.response?.data?.message || err.message));
@@ -96,7 +100,7 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved }) {
 
                 <div className="flex justify-end">
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="mr-2 px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100"
                     >
                         Cancel
