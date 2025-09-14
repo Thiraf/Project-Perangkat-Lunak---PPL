@@ -89,19 +89,18 @@ class ItemController extends Controller
             $itemData['mime_type'] = $file->getMimeType();
             $itemData['size'] = $file->getSize();
 
-        } else { // type is 'folder'
+        } else {
             $originalFolderName = $validated['name'];
             $finalName = $originalFolderName;
             $counter = 1;
 
-            // Lakukan pengecekan duplikasi nama untuk folder juga
             while (Item::where('owner_id', $user->id)
                        ->where('parent_id', $parentId)
                        ->where('name', $finalName)
                        ->where('type', 'folder')
                        ->exists())
             {
-                $finalName = $originalFolderName . ' (' . $counter . ')';
+                $finalName = $originalFolderName .'(' . $counter . ')';
                 $counter++;
             }
             $itemData['name'] = $finalName;

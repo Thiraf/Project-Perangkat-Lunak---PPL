@@ -213,7 +213,7 @@ export default function Dashboard({ auth }) {
                                     <FileRow
                                         id={file.id}
                                         name={file.name}
-                                        type={file.mime_type ? file.mime_type.split('/')[1] : ''}
+                                        type={file.mime_type}
                                         owner={ownerName}
                                         modified={modifiedDisplay}
                                         size={file.size ? `${Math.round(file.size / 1024)} KB` : ''}

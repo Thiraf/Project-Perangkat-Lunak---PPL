@@ -106,11 +106,11 @@ export default function Login({ status }) {
                 </div>
 
                 {/* Right side (Image) */}
-        <div className="hidden md:block md:w-1/2 h-full">
+                <div className="hidden md:block md:w-1/2 h-full">
                     <img
-            src="/images/login-bg.png"
-            alt="Login background"
-            className="w-full h-full object-cover"
+                        src="/images/login-bg.png"
+                        alt="Login background"
+                        className="w-full h-full object-cover"
                     />
                 </div>
             </div>
