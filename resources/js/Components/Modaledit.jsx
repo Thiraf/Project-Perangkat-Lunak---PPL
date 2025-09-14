@@ -18,10 +18,10 @@ export default function ModalEdit({ isOpen, onClose, initialName, onSave }) {
 
     return (
         <div 
-            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50" 
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 cursor-default" 
             onClick={e => { e.stopPropagation(); onClose(); }}
         >
-            <div className="bg-white rounded-lg shadow-lg w-96 p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-lg shadow-lg w-96 p-6 cursor-default" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-lg font-semibold mb-4">Edit Name</h2>
 
                 <input

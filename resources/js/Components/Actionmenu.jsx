@@ -5,7 +5,7 @@ import ModalEdit from "./ModalEdit";
 import ModalDelete from "./ModalDelete";
 import axios from "axios";
 
-export default function ActionMenu({ id, name, onRename, onDelete }) {
+export default function ActionMenu({ id, name, type, onRename, onDelete }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
@@ -76,7 +76,10 @@ export default function ActionMenu({ id, name, onRename, onDelete }) {
             <ModalShare
                 isOpen={shareOpen}
                 onClose={() => setShareOpen(false)}
-                fileName={name}
+                itemName={name}
+                itemId={id}
+                itemType={type}
+                onShare={() => {}}
             />
 
             <ModalEdit
@@ -96,7 +99,7 @@ export default function ActionMenu({ id, name, onRename, onDelete }) {
             <ModalDelete
                 isOpen={deleteOpen}
                 onClose={() => setDeleteOpen(false)}
-                name={name}
+                itemName={name}
                 onConfirm={async () => {
                     console.log("Deleting item with id:", id);
                     try {

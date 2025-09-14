@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ItemShareController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,8 +31,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/items/{id}', [ItemController::class, 'update'])->name('items.update');
     Route::delete('/items/{id}', [ItemController::class, 'destroy'])->name('items.destroy');
 
-    // New route for folder view with user id
     Route::get('/{user}/folders/{id}', [ItemController::class, 'folderView'])->name('folders.view');
+    
+    Route::get('items/{item}/shares', [ItemShareController::class, 'index'])->name('items.shares.index');
+    Route::post('items/{item}/shares', [ItemShareController::class, 'store'])->name('items.shares.store');
+    Route::patch('items/{item}/shares/{user}', [ItemShareController::class, 'update'])->name('items.shares.update');
+    Route::delete('items/{item}/shares/{user}', [ItemShareController::class, 'destroy'])->name('items.shares.destroy');
 });
 
 require __DIR__.'/auth.php';

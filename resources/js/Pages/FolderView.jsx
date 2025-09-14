@@ -30,6 +30,8 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
     const [folders, setFolders] = useState(items.filter((item) => item.type === "folder"));
     const [files, setFiles] = useState(items.filter((item) => item.type === "file"));
 
+    const canAddNew = folder.owner_id === auth.user.id || folder.permission === "editor";
+
     const fetchItems = useCallback((alertMsg = null) => {
         setIsLoading(true);
         axios.get("/items", { params: { parent_id: folder.id } })
@@ -181,62 +183,67 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
                             ]}
                         />
                     </div>
-
-                    <div className="ml-auto">
-                        <CustomSelect
-                            label="+ Add New"
-                            primary
-                            value={newItem}
-                            onChange={setNewItem}
-                            options={[
-                                {
-                                    value: "newfolder",
-                                    label: "New Folder",
-                                    image: "/images/newfolder.png",
-                                },
-                                {
-                                    value: "fileupload",
-                                    label: "File Upload",
-                                    image: "/images/fileupload.png",
-                                },
-                                {
-                                    value: "folderupload",
-                                    label: "Folder Upload",
-                                    image: "/images/folderupload.png",
-                                },
-                                {
-                                    value: "docx",
-                                    label: "DOCX",
-                                    image: "/images/docx.png",
-                                },
-                                {
-                                    value: "csv",
-                                    label: "CSV",
-                                    image: "/images/csv.png",
-                                },
-                                {
-                                    value: "pptx",
-                                    label: "PPTX",
-                                    image: "/images/pptx.png",
-                                },
-                            ]}
-                        />
-                    </div>
+                        {canAddNew && (
+                            <div className="ml-auto">
+                                <CustomSelect
+                                    label="+ Add New"
+                                    primary
+                                    value={newItem}
+                                    onChange={setNewItem}
+                                    options={[
+                                        {
+                                            value: "newfolder",
+                                            label: "New Folder",
+                                            image: "/images/newfolder.png",
+                                        },
+                                        {
+                                            value: "fileupload",
+                                            label: "File Upload",
+                                            image: "/images/fileupload.png",
+                                        },
+                                        {
+                                            value: "folderupload",
+                                            label: "Folder Upload",
+                                            image: "/images/folderupload.png",
+                                        },
+                                        {
+                                            value: "docx",
+                                            label: "DOCX",
+                                            image: "/images/docx.png",
+                                        },
+                                        {
+                                            value: "csv",
+                                            label: "CSV",
+                                            image: "/images/csv.png",
+                                        },
+                                        {
+                                            value: "pptx",
+                                            label: "PPTX",
+                                            image: "/images/pptx.png",
+                                        },
+                                    ]}
+                                />
+                            </div>
+                        )}
                 </div>
             </div>
 
             <div className="mt-8">
                 <h3 className="text-xl font-semibold mb-4">Folders</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {folders.map((folder) => (
-                        <FolderCard
-                            id={folder.id}
-                            name={folder.name}
-                            onDelete={() => fetchItems("Folder deleted successfully")}
-                            onRename={() => fetchItems("Folder renamed successfully")}
-                            onFolderClick={() => handleItemClick(folder)}
-                        />
-                    ))}
+                    {folders.map((folder) => {
+                        const canEdit = folder.owner_id === auth.user.id || (folder.shared_permission === "editor");
+                        return (
+                            <FolderCard
+                                id={folder.id}
+                                name={folder.name}
+                                onDelete={() => fetchItems("Folder deleted successfully")}
+                                onRename={() => fetchItems("Folder renamed successfully")}
+                                onFolderClick={() => handleItemClick(folder)}
+                                canEdit={canEdit}
+                            />
+                        );
+                    })}
                 </div>
             </div>
 
@@ -269,11 +276,13 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
                                 } else {
                                     modifiedDisplay = `${fileDate.format('MMM DD, YYYY')} ${ownerName}`;
                                 }
+                                const canEdit = folder.owner_id === auth.user.id || file.owner_id === auth.user.id || (file.shared_permission === "editor");
                                 return (
                                     <FileRow
                                         id={file.id}
                                         name={file.name}
-                                        type={file.mime_type}
+                                        type={file.type}
+                                        mimeType={file.mime_type}
                                         owner={ownerName}
                                         modified={modifiedDisplay}
                                         size={file.size ? `${Math.round(file.size / 1024)} KB` : ''}
@@ -281,6 +290,7 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
                                         onDelete={() => fetchItems("File deleted successfully")}
                                         onRename={() => fetchItems("File renamed successfully")}
                                         onFileClick={() => handleItemClick(file)}
+                                        canEdit={canEdit}
                                     />
                                 );
                             })}

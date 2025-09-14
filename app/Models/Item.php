@@ -24,6 +24,11 @@ class Item extends Model
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    public function parentRecursive()
+    {
+        return $this->belongsTo(Item::class, 'parent_id')->with('parentRecursive');
+    }
+
     public function parent()
     {
         return $this->belongsTo(Item::class, 'parent_id');

@@ -11,10 +11,8 @@ function getFileIconType(mimeType) {
     return "file";
 }
 
-// Updated to accept individual props to match the parent component's usage.
-export default function FileRow({ id, name, type, owner, modified, size, onDelete, onRename, onFileClick }) {
-    // If the 'type' prop (which is the mime_type) is null, we'll treat it as a folder.
-    const icon = type ? getFileIconType(type) : 'folder';
+export default function FileRow({ id, name, type, mimeType, owner, modified, size, onDelete, onRename, onFileClick, onShare, canEdit }) {
+    const icon = type ? getFileIconType(mimeType) : 'folder';
 
     return (
         <tr 
@@ -29,12 +27,17 @@ export default function FileRow({ id, name, type, owner, modified, size, onDelet
                     className="w-6 h-6"
                 />
                 <span>{name}</span>
+                {!canEdit && (
+                    <img src="/images/share.png" alt="Shared" className="w-4 h-4 ml-2" title="Shared with you" />
+                )}
             </td>
             <td className="py-2 px-3">{owner}</td>
             <td className="py-2 px-3">{modified}</td>
             <td className="py-2 px-3">{size}</td>
             <td className="py-2 px-3">
-                <ActionMenu id={id} name={name} onDelete={onDelete} onRename={onRename} />
+                {canEdit && (
+                    <ActionMenu id={id} name={name} type={type} onDelete={onDelete} onRename={onRename} onShare={onShare} />
+                )}
             </td>
         </tr>
     );

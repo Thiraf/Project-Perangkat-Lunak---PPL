@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class ItemController extends Controller
 {
@@ -18,15 +19,25 @@ class ItemController extends Controller
         $user = Auth::user();
         $parentId = $request->input('parent_id', null);
 
-        $items = Item::where('owner_id', $user->id)
-                     ->where('parent_id', $parentId)
-                     ->with('owner')
-                     ->get();
+        $items = Item::where(function($q) use ($user) {
+                $q->where('owner_id', $user->id)
+                  ->orWhereHas('sharedWithUsers', function($q2) use ($user) {
+                      $q2->where('users.id', $user->id);
+                  });
+            })
+            ->where('parent_id', $parentId)
+            ->with('owner')
+            ->get();
 
-        // Add owner_name to each item
-        $items = $items->map(function ($item) {
+        $items = $items->map(function ($item) use ($user) {
             $itemArr = $item->toArray();
             $itemArr['owner_name'] = $item->owner ? $item->owner->name : null;
+            if ($item->owner_id === $user->id) {
+                $itemArr['shared_permission'] = null;
+            } else {
+                $share = \App\Models\Share::where('item_id', $item->id)->where('user_id', $user->id)->first();
+                $itemArr['shared_permission'] = $share ? $share->permission : null;
+            }
             return $itemArr;
         });
 
@@ -46,12 +57,11 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
-        // (Tambahkan validasi yang lebih baik menggunakan Form Request nanti)
         $validated = $request->validate([
             'name' => 'required_if:type,folder|string|max:255',
             'type' => 'required|in:folder,file',
             'parent_id' => 'nullable|exists:items,id',
-            'file' => 'required_if:type,file|file|max:10240', // 10 MB limit
+            'file' => 'required_if:type,file|file|max:10240', 
         ]);
 
         $user = Auth::user();
@@ -72,7 +82,6 @@ class ItemController extends Controller
             $finalName = $originalFullName;
             $counter = 1;
 
-            // Terus periksa ke database dan cari nama unik jika nama file sudah ada
             while (Item::where('owner_id', $user->id)
                        ->where('parent_id', $parentId)
                        ->where('name', $finalName)
@@ -108,6 +117,19 @@ class ItemController extends Controller
         }
 
         $item = Item::create($itemData);
+
+        if ($parentId) {
+            $parentFolder = Item::where('id', $parentId)->where('type', 'folder')->first();
+            if ($parentFolder) {
+                $sharedUsers = $parentFolder->sharedWithUsers;
+                foreach ($sharedUsers as $sharedUser) {
+                    $item->sharedWithUsers()->syncWithoutDetaching([
+                        $sharedUser->id => ['permission' => $sharedUser->pivot->permission]
+                    ]);
+                }
+            }
+        }
+
         return response()->json($item, 201);
     }
 
@@ -117,17 +139,32 @@ class ItemController extends Controller
     public function show(string $id)
     {
         $user = Auth::user();
-        $item = Item::where('id', $id)->where('owner_id', $user->id)->first();
-
+        $item = Item::find($id);
         if (!$item) {
+            return response()->json(['error' => 'Item not found or unauthorized'], 404);
+        }
+
+        $canView = $item->owner_id === $user->id;
+
+        if (!$canView && $item->parent_id) {
+            $parentFolder = Item::where('id', $item->parent_id)->where('type', 'folder')->first();
+            if ($parentFolder && $parentFolder->owner_id === $user->id) {
+                $canView = true;
+            }
+        }
+
+        if (!$canView) {
+            $canView = $item->sharedWithUsers()->where('users.id', $user->id)->exists();
+        }
+
+        if (!$canView) {
             return response()->json(['error' => 'Item not found or unauthorized'], 404);
         }
 
         if ($item->type === 'folder') {
             return response()->json(['error' => 'Cannot preview a folder'], 400);
         }
-        
-        // Add the public URL to the item object
+
         $item->url = Storage::url($item->path);
 
         return response()->json($item);
@@ -139,45 +176,79 @@ class ItemController extends Controller
     public function folderView($userId, $id)
     {
         $authUser = Auth::user();
-        // Only allow access if the userId matches the authenticated user
-        if ($authUser->id != $userId) {
-            abort(403, 'Unauthorized');
+
+        $folder = Item::where('id', $id)
+            ->where('type', 'folder')
+            ->with([
+                'parentRecursive.sharedWithUsers' => function ($query) use ($authUser) {
+                    $query->where('users.id', $authUser->id);
+                },
+                'sharedWithUsers' => function ($query) use ($authUser) {
+                    $query->where('users.id', $authUser->id);
+                }
+            ])
+            ->firstOrFail();
+
+        $canView = $folder->owner_id === $authUser->id || $folder->sharedWithUsers->isNotEmpty();
+        if (!$canView) {
+            abort(403, 'Unauthorized'); // If not, deny access.
         }
 
-        $folder = Item::where('id', $id)->where('owner_id', $authUser->id)->where('type', 'folder')->first();
-        if (!$folder) {
-            abort(404, 'Folder not found or unauthorized');
+        $childrenQuery = Item::where('parent_id', $folder->id);
+
+        if ($folder->owner_id !== $authUser->id) {
+            $childrenQuery->where(function ($query) use ($authUser) {
+                $query->where('owner_id', $authUser->id)
+                      ->orWhereHas('sharedWithUsers', function ($q) use ($authUser) {
+                          $q->where('users.id', $authUser->id);
+                      });
+            });
         }
 
-        // Get children items
-        $items = Item::where('owner_id', $authUser->id)
-                     ->where('parent_id', $folder->id)
-                     ->with('owner')
-                     ->get();
-        $items = $items->map(function ($item) {
-            $itemArr = $item->toArray();
-            $itemArr['owner_name'] = $item->owner ? $item->owner->name : null;
-            return $itemArr;
+        $children = $childrenQuery->with([
+                'owner:id,name',
+                'sharedWithUsers' => function ($query) use ($authUser) {
+                    $query->where('users.id', $authUser->id);
+                }
+            ])
+            ->get();
+
+        $items = $children->map(function ($item) use ($authUser) {
+            $sharedInfo = $item->sharedWithUsers->first();
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'type' => $item->type,
+                'size' => $item->size,
+                'owner_name' => $item->owner->name ?? 'Unknown',
+                'owner_id' => $item->owner_id,
+                'permission' => $item->owner_id === $authUser->id ? 'owner' : ($sharedInfo ? $sharedInfo->pivot->permission : null),
+            ];
         });
 
-        // Build breadcrumb (from root to current folder)
         $breadcrumb = [];
         $current = $folder;
         while ($current) {
+            $share = $current->sharedWithUsers->first();
+            $permission = $current->owner_id === $authUser->id ? 'owner' : ($share ? $share->pivot->permission : null);
+
             $breadcrumb[] = [
                 'id' => $current->id,
                 'name' => $current->name,
+                'permission' => $permission,
             ];
-            $current = $current->parent_id ? Item::where('id', $current->parent_id)->where('owner_id', $authUser->id)->where('type', 'folder')->first() : null;
+            $current = $current->parentRecursive;
         }
         $breadcrumb = array_reverse($breadcrumb);
 
-        // Render the FolderView page using Inertia
-        return \Inertia\Inertia::render('FolderView', [
-            'auth' => ['user' => $authUser],
+        $folderPermission = $breadcrumb[count($breadcrumb) - 1]['permission'];
+
+        return Inertia::render('FolderView', [
             'folder' => [
                 'id' => $folder->id,
                 'name' => $folder->name,
+                'owner_id' => $folder->owner_id,
+                'permission' => $folderPermission,
             ],
             'items' => $items,
             'breadcrumb' => $breadcrumb,
@@ -198,9 +269,22 @@ class ItemController extends Controller
     public function update(Request $request, string $id)
     {
         $user = Auth::user();
-        $item = Item::where('id', $id)->where('owner_id', $user->id)->first();
+        $item = Item::find($id);
         if (!$item) {
             return response()->json(['error' => 'Item not found or unauthorized'], 404);
+        }
+
+        $canEdit = false;
+        if ($item->owner_id === $user->id) {
+            $canEdit = true;
+        } elseif ($item->parent_id) {
+            $parentFolder = Item::where('id', $item->parent_id)->where('type', 'folder')->first();
+            if ($parentFolder && $parentFolder->owner_id === $user->id) {
+                $canEdit = true;
+            }
+        }
+        if (!$canEdit) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
@@ -219,9 +303,22 @@ class ItemController extends Controller
     public function destroy(string $id)
     {
         $user = Auth::user();
-        $item = Item::where('id', $id)->where('owner_id', $user->id)->first();
+        $item = Item::find($id);
         if (!$item) {
             return response()->json(['error' => 'Item not found or unauthorized'], 404);
+        }
+
+        $canEdit = false;
+        if ($item->owner_id === $user->id) {
+            $canEdit = true;
+        } elseif ($item->parent_id) {
+            $parentFolder = Item::where('id', $item->parent_id)->where('type', 'folder')->first();
+            if ($parentFolder && $parentFolder->owner_id === $user->id) {
+                $canEdit = true;
+            }
+        }
+        if (!$canEdit) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         if ($item->type === 'file' && $item->path) {

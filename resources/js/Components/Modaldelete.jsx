@@ -1,18 +1,18 @@
-export default function ModalDelete({ isOpen, onClose, onConfirm, name }) {
+export default function ModalDelete({ isOpen, onClose, onConfirm, itemName }) {
     if (!isOpen) return null;
 
     return (
         <div 
-            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50" 
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 cursor-default" 
             onClick={e => { e.stopPropagation(); onClose(); }}
         >
-            <div className="bg-white rounded-lg shadow-lg w-96 p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-lg shadow-lg w-96 p-6 cursor-default" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-lg font-semibold mb-4 text-red-600">
                     Delete Confirmation
                 </h2>
                 <p className="text-gray-700 mb-6">
                     Are you sure you want to delete{" "}
-                    <span className="font-semibold">{name}</span>?
+                    <span className="font-semibold">{itemName}</span>?
                 </p>
 
                 <div className="flex justify-end space-x-2">

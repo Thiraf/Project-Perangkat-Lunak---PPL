@@ -192,15 +192,24 @@ export default function Dashboard({ auth }) {
             <div className="mt-8">
                 <h3 className="text-xl font-semibold mb-4">Folders</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {folders.map((folder) => (
-                        <FolderCard 
-                            id={folder.id} 
-                            name={folder.name}
-                            onDelete={() => fetchItems("Folder deleted successfully")}
-                            onRename={() => fetchItems("Folder renamed successfully")}
-                            onFolderClick={() => handleItemClick(folder)}
-                        />
-                    ))}
+                    {folders.map((folder) => {
+                        const canEdit = folder.owner_id === auth.user.id;
+                        return (
+                            <FolderCard 
+                                id={folder.id} 
+                                name={folder.name}
+                                type={folder.type}
+                                onShare={() => {
+                                    fetchItems("Folder shared successfully");
+                                    setAlert({ show: true, message: "User added to folder successfully", type: "success" });
+                                }}
+                                onDelete={() => fetchItems("Folder deleted successfully")}
+                                onRename={() => fetchItems("Folder renamed successfully")}
+                                onFolderClick={() => handleItemClick(folder)}
+                                canEdit={canEdit}
+                            />
+                        );
+                    })}
                 </div>
             </div>
 
@@ -233,18 +242,25 @@ export default function Dashboard({ auth }) {
                                 } else {
                                     modifiedDisplay = `${fileDate.format('MMM DD, YYYY')} ${ownerName}`;
                                 }
+                                const canEdit = file.owner_id === auth.user.id;
                                 return (
                                     <FileRow
                                         id={file.id}
                                         name={file.name}
-                                        type={file.mime_type}
+                                        type={file.type}
+                                        mimeType={file.mime_type}
                                         owner={ownerName}
                                         modified={modifiedDisplay}
                                         size={file.size ? `${Math.round(file.size / 1024)} KB` : ''}
                                         path={file.path}
+                                        onShare={() => {
+                                            fetchItems("File shared successfully");
+                                            setAlert({ show: true, message: "User added to file successfully", type: "success" });
+                                        }}
                                         onDelete={() => fetchItems("File deleted successfully")}
                                         onRename={() => fetchItems("File renamed successfully")}
                                         onFileClick={() => handleItemClick(file)}
+                                        canEdit={canEdit}
                                     />
                                 );
                             })}

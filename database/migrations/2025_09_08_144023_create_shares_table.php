@@ -16,9 +16,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('item_id')->constrained('items')->onDelete('cascade');
             $table->enum('permission', ['viewer', 'editor']);
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
             
-            // Mencegah duplikasi data sharing
             $table->unique(['user_id', 'item_id']);
         });
     }
