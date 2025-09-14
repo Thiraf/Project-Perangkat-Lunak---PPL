@@ -29,6 +29,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/items/{id}', [ItemController::class, 'show'])->name('items.show');
     Route::patch('/items/{id}', [ItemController::class, 'update'])->name('items.update');
     Route::delete('/items/{id}', [ItemController::class, 'destroy'])->name('items.destroy');
+
+    // New route for folder view with user id
+    Route::get('/{user}/folders/{id}', [ItemController::class, 'folderView'])->name('folders.view');
 });
 
 require __DIR__.'/auth.php';

@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import Dropzone from "@/Components/Dropzone";
 
-export default function ModalNewFile({ isOpen, onClose, onSaved }) {
+export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
     const [fileName, setFileName] = useState("");
     const [labels, setLabels] = useState([]);
     const [file, setFile] = useState(null);
@@ -24,6 +24,9 @@ export default function ModalNewFile({ isOpen, onClose, onSaved }) {
         formData.append("name", fileName || file.name);
         formData.append("type", "file");
         formData.append("file", file);
+        if (parentId) {
+            formData.append("parent_id", parentId);
+        }
         try {
             await axios.post("/items", formData, {
                 headers: {
@@ -103,14 +106,19 @@ export default function ModalNewFile({ isOpen, onClose, onSaved }) {
                     <label className="block text-sm font-medium mb-2">
                         File
                     </label>
-                    <Dropzone
-                        onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
-                    />
-                    {file && (
-                        <p className="mt-2 text-sm text-green-600 font-semibold">
-                            Selected: {file.name} (
-                            {Math.round(file.size / 1024)} KB)
-                        </p>
+                    {file ? (
+                        <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-gray-50">
+                            <span className="inline-block max-w-[180px] overflow-hidden whitespace-nowrap text-ellipsis align-bottom" title={file.name}>{file.name}</span>
+                            <span className="text-xs text-gray-500">({Math.round(file.size / 1024)} KB)</span>
+                            <button
+                                className="ml-auto px-2 py-1 text-xs text-red-600 hover:text-red-800"
+                                onClick={() => setFile(null)}
+                            >Remove</button>
+                        </div>
+                    ) : (
+                        <Dropzone
+                            onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
+                        />
                     )}
                 </div>
 

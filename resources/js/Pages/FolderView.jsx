@@ -13,7 +13,7 @@ import LoadingOverlay from "@/Components/LoadingOverlay";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import PreviewModal from "@/Components/PreviewModal";
 
-export default function Dashboard({ auth }) {
+export default function FolderView({ auth, folder, items, breadcrumb }) {
     const [label, setLabel] = useState("");
     const [type, setType] = useState("");
     const [filter, setFilter] = useState("");
@@ -22,16 +22,17 @@ export default function Dashboard({ auth }) {
     const [showModalNewFolder, setshowModalNewFolder] = useState(false);
     const [showModalUploadFile, setShowModalUploadFile] = useState(false);
 
-    const [folders, setFolders] = useState([]);
-    const [files, setFiles] = useState([]);
     const [sortOrder, setSortOrder] = useState("desc");
     const [isLoading, setIsLoading] = useState(false);
     const [alert, setAlert] = useState({ show: false, message: "", type: "success" });
     const [previewFile, setPreviewFile] = useState(null);
 
+    const [folders, setFolders] = useState(items.filter((item) => item.type === "folder"));
+    const [files, setFiles] = useState(items.filter((item) => item.type === "file"));
+
     const fetchItems = useCallback((alertMsg = null) => {
         setIsLoading(true);
-        axios.get("/items")
+        axios.get("/items", { params: { parent_id: folder.id } })
             .then((res) => {
                 const items = res.data;
                 setFolders(items.filter((item) => item.type === "folder"));
@@ -47,7 +48,7 @@ export default function Dashboard({ auth }) {
             .finally(() => {
                 setIsLoading(false);
             });
-    }, []);
+    }, [folder.id]);
 
     useEffect(() => {
         if (newItem === "newfolder") {
@@ -60,17 +61,15 @@ export default function Dashboard({ auth }) {
     }, [newItem]);
 
     useEffect(() => {
-        fetchItems();
-    }, [fetchItems]);
+        setFolders(items.filter((item) => item.type === "folder"));
+        setFiles(items.filter((item) => item.type === "file"));
+    }, [items]);
 
     const handleItemClick = (item) => {
-        console.log("Item clicked:", item);
-        
         if (item.type === 'folder') {
             window.location.href = `/${auth.user.id}/folders/${item.id}`;
             return;
-        } 
-        
+        }
         setIsLoading(true);
         axios.get(route('items.show', { id: item.id }))
             .then(response => {
@@ -85,9 +84,17 @@ export default function Dashboard({ auth }) {
             });
     };
 
+    const handleBreadcrumbClick = (crumb, idx) => {
+        if (crumb.id === null) {
+            window.location.href = "/dashboard";
+        } else {
+            window.location.href = `/${auth.user.id}/folders/${crumb.id}`;
+        }
+    };
+
     return (
         <AuthenticatedLayout user={auth.user}>
-            <Head title="Dashboard" />
+            <Head title={`${folder.name}`} />
             {isLoading && <LoadingOverlay />}
             <AlertMessage
                 show={alert.show}
@@ -95,7 +102,36 @@ export default function Dashboard({ auth }) {
                 type={alert.type}
                 onClose={() => setAlert({ ...alert, show: false })}
             />
-            <h2 className="text-4xl font-semibold">Document</h2>
+
+            <h2 className="text-4xl font-semibold">{folder.name}</h2>
+
+            {/* Breadcrumb */}
+            <div className="mt-4">
+                <nav className="mb-4 flex items-center text-gray-600 text-sm">
+                    <span className="flex items-center">
+                        <button
+                            className={`hover:underline ${breadcrumb.length === 0 ? 'font-bold text-black' : ''}`}
+                            onClick={() => handleBreadcrumbClick({ id: null, name: "Dashboard" }, 0)}
+                            disabled={false}
+                        >
+                            Dashboard
+                        </button>
+                        {breadcrumb.length > 0 && <span className="mx-2">/</span>}
+                    </span>
+                    {breadcrumb.map((crumb, idx) => (
+                        <span key={crumb.id || 'root'} className="flex items-center">
+                            <button
+                                className={`hover:underline ${idx === breadcrumb.length - 1 ? 'font-bold text-black' : ''}`}
+                                onClick={() => handleBreadcrumbClick(crumb, idx)}
+                                disabled={idx === breadcrumb.length - 1}
+                            >
+                                {crumb.name}
+                            </button>
+                            {idx < breadcrumb.length - 1 && <span className="mx-2">/</span>}
+                        </span>
+                    ))}
+                </nav>
+            </div>
 
             <div className="mt-6">
                 <div className="mt-4 flex items-center">
@@ -193,8 +229,8 @@ export default function Dashboard({ auth }) {
                 <h3 className="text-xl font-semibold mb-4">Folders</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {folders.map((folder) => (
-                        <FolderCard 
-                            id={folder.id} 
+                        <FolderCard
+                            id={folder.id}
                             name={folder.name}
                             onDelete={() => fetchItems("Folder deleted successfully")}
                             onRename={() => fetchItems("Folder renamed successfully")}
@@ -251,12 +287,12 @@ export default function Dashboard({ auth }) {
                     </tbody>
                 </table>
             </div>
-
             {/* Modal Folder */}
             <ModalNewFolder
                 isOpen={showModalNewFolder}
                 onClose={() => setshowModalNewFolder(false)}
                 onSaved={() => fetchItems("Folder created successfully")}
+                parentId={folder.id}
             />
 
             {/* Modal Upload File */}
@@ -264,8 +300,9 @@ export default function Dashboard({ auth }) {
                 isOpen={showModalUploadFile}
                 onClose={() => setShowModalUploadFile(false)}
                 onSaved={() => fetchItems("File uploaded successfully")}
+                parentId={folder.id}
             />
-            
+
             {/* Modal Preview File */}
             <PreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
         </AuthenticatedLayout>

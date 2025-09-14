@@ -17,15 +17,12 @@ export default function PreviewModal({ file, onClose }) {
     }
 
     const renderPreview = () => {
-        // For images, render an img tag
         if (file.mime_type.startsWith("image/")) {
             return <img src={file.url} alt={file.name} className="max-w-full max-h-[70vh] object-contain" />;
         }
-        // For PDFs, use an iframe or embed
         if (file.mime_type === "application/pdf") {
             return <iframe src={file.url} className="w-full h-[80vh]" title={file.name}></iframe>;
         }
-        // For other files, show an icon and a message
         return (
             <div className="text-center p-8">
                 <img src={getFileIcon(file.mime_type)} alt="file icon" className="w-24 h-24 mx-auto mb-4" />

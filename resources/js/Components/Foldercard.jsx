@@ -1,8 +1,11 @@
 import ActionMenu from "@/Components/ActionMenu";
 
-export default function FolderCard({ id, name, onDelete, onRename }) {
+export default function FolderCard({ id, name, onDelete, onRename, onFolderClick }) {
     return (
-        <div className="flex justify-between items-center border rounded-lg px-4 py-3 bg-white shadow-sm hover:shadow-md cursor-pointer">
+        <div 
+            className="flex justify-between items-center border rounded-lg px-4 py-3 bg-white shadow-sm hover:shadow-md cursor-pointer"
+            onClick={onFolderClick}
+        >
             <span className="font-medium">{name}</span>
             <ActionMenu id={id} name={name} onDelete={onDelete} onRename={onRename} />
         </div>

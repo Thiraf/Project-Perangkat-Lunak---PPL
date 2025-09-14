@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function ModalNewFolder({ isOpen, onClose, onSaved }) {
+export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
     const [folderName, setFolderName] = useState("");
     const [labels, setLabels] = useState([]);
     const [input, setInput] = useState("");
@@ -20,6 +20,9 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved }) {
         const formData = new FormData();
         formData.append("name", folderName.trim());
         formData.append("type", "folder");
+        if (parentId) {
+            formData.append("parent_id", parentId);
+        }
         if (labels.length > 0) {
             formData.append("labels", JSON.stringify(labels));
         }

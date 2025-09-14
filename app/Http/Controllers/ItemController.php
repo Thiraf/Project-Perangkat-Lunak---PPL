@@ -134,6 +134,57 @@ class ItemController extends Controller
     }
 
     /**
+     * Show the contents of a folder with breadcrumb.
+     */
+    public function folderView($userId, $id)
+    {
+        $authUser = Auth::user();
+        // Only allow access if the userId matches the authenticated user
+        if ($authUser->id != $userId) {
+            abort(403, 'Unauthorized');
+        }
+
+        $folder = Item::where('id', $id)->where('owner_id', $authUser->id)->where('type', 'folder')->first();
+        if (!$folder) {
+            abort(404, 'Folder not found or unauthorized');
+        }
+
+        // Get children items
+        $items = Item::where('owner_id', $authUser->id)
+                     ->where('parent_id', $folder->id)
+                     ->with('owner')
+                     ->get();
+        $items = $items->map(function ($item) {
+            $itemArr = $item->toArray();
+            $itemArr['owner_name'] = $item->owner ? $item->owner->name : null;
+            return $itemArr;
+        });
+
+        // Build breadcrumb (from root to current folder)
+        $breadcrumb = [];
+        $current = $folder;
+        while ($current) {
+            $breadcrumb[] = [
+                'id' => $current->id,
+                'name' => $current->name,
+            ];
+            $current = $current->parent_id ? Item::where('id', $current->parent_id)->where('owner_id', $authUser->id)->where('type', 'folder')->first() : null;
+        }
+        $breadcrumb = array_reverse($breadcrumb);
+
+        // Render the FolderView page using Inertia
+        return \Inertia\Inertia::render('FolderView', [
+            'auth' => ['user' => $authUser],
+            'folder' => [
+                'id' => $folder->id,
+                'name' => $folder->name,
+            ],
+            'items' => $items,
+            'breadcrumb' => $breadcrumb,
+        ]);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)
