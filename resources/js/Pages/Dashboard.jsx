@@ -12,6 +12,7 @@ import FileRow from "@/Components/FileRow";
 import AlertMessage from "@/Components/AlertMessage";
 import LoadingOverlay from "@/Components/LoadingOverlay";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import PreviewModal from "@/Components/PreviewModal";
 
 export default function Dashboard({ auth }) {
     const [label, setLabel] = useState("");
@@ -27,6 +28,7 @@ export default function Dashboard({ auth }) {
     const [sortOrder, setSortOrder] = useState("desc");
     const [isLoading, setIsLoading] = useState(false);
     const [alert, setAlert] = useState({ show: false, message: "", type: "success" });
+    const [previewFile, setPreviewFile] = useState(null); // State for the file to preview
 
     const fetchItems = useCallback((alertMsg = null) => {
         setIsLoading(true);
@@ -61,6 +63,25 @@ export default function Dashboard({ auth }) {
     useEffect(() => {
         fetchItems();
     }, [fetchItems]);
+
+    const handleFileClick = (item) => {
+        if (item.type === 'folder') {
+            console.log("Navigating to folder:", item.name);
+            return;
+        }
+        setIsLoading(true);
+        axios.get(route('items.show', { id: item.id }))
+            .then(response => {
+                setPreviewFile(response.data);
+            })
+            .catch(error => {
+                console.error("Error fetching file details:", error);
+                alert("Could not load file for preview.");
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    };
 
     return (
         <AuthenticatedLayout user={auth.user}>
@@ -220,6 +241,7 @@ export default function Dashboard({ auth }) {
                                         path={file.path}
                                         onDelete={() => fetchItems("File deleted successfully")}
                                         onRename={() => fetchItems("File renamed successfully")}
+                                        onFileClick={() => handleFileClick(file)}
                                     />
                                 );
                             })}
@@ -240,6 +262,9 @@ export default function Dashboard({ auth }) {
                 onClose={() => setShowModalUploadFile(false)}
                 onSaved={() => fetchItems("File uploaded successfully")}
             />
+            
+            {/* Modal Preview File */}
+            <PreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
         </AuthenticatedLayout>
     );
 }

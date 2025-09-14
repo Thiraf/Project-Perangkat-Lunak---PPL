@@ -116,7 +116,21 @@ class ItemController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $user = Auth::user();
+        $item = Item::where('id', $id)->where('owner_id', $user->id)->first();
+
+        if (!$item) {
+            return response()->json(['error' => 'Item not found or unauthorized'], 404);
+        }
+
+        if ($item->type === 'folder') {
+            return response()->json(['error' => 'Cannot preview a folder'], 400);
+        }
+        
+        // Add the public URL to the item object
+        $item->url = Storage::url($item->path);
+
+        return response()->json($item);
     }
 
     /**

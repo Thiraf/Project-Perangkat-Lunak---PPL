@@ -36,10 +36,14 @@ export default function ActionMenu({ id, name, onRename, onDelete }) {
             </button>
 
             {menuOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-md border z-10">
+                <div 
+                    className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-md border z-10"
+                    onClick={e => e.stopPropagation()}
+                >
                     <button
                         className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100"
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             setShareOpen(true);
                             setMenuOpen(false);
                         }}
@@ -48,7 +52,8 @@ export default function ActionMenu({ id, name, onRename, onDelete }) {
                     </button>
                     <button
                         className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100"
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             setEditOpen(true);
                             setMenuOpen(false);
                         }}
@@ -57,7 +62,8 @@ export default function ActionMenu({ id, name, onRename, onDelete }) {
                     </button>
                     <button
                         className="flex items-center w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             setDeleteOpen(true);
                             setMenuOpen(false);
                         }}
