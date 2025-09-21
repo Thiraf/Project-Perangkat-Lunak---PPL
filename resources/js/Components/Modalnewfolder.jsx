@@ -1,15 +1,20 @@
 import { useState } from "react";
 import axios from "axios";
+import AlertMessage from "@/Components/AlertMessage";
 
 export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
     const [folderName, setFolderName] = useState("");
     const [labels, setLabels] = useState([]);
     const [input, setInput] = useState("");
+    const [error, setError] = useState("");
+    const [showError, setShowError] = useState(false);
 
     const handleClose = () => {
         setFolderName("");
         setLabels([]);
         setInput("");
+        setError("");
+        setShowError(false);
         onClose();
     };
 
@@ -35,7 +40,9 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
             handleClose();
             if (onSaved) onSaved();
         } catch (err) {
-            alert("Upload failed: " + (err.response?.data?.message || err.message));
+            let msg = err.response?.data?.error || err.response?.data?.message || err.message || "Failed to create new folder.";
+            setError(msg);
+            setShowError(true);
         }
     };
 
@@ -60,6 +67,14 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50" onClick={onClose}>
             <div className="bg-white rounded-lg shadow-lg w-96 p-6" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-lg font-semibold mb-4">New Folder</h2>
+
+                {/* Error Alert */}
+                <AlertMessage
+                    message={error}
+                    type="error"
+                    show={showError}
+                    onClose={() => setShowError(false)}
+                />
 
                 <div className="mb-4">
                     <input

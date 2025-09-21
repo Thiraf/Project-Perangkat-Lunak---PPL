@@ -1,18 +1,23 @@
 import { useState } from "react";
 import axios from "axios";
 import Dropzone from "@/Components/Dropzone";
+import AlertMessage from "@/Components/AlertMessage";
 
 export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
     const [fileName, setFileName] = useState("");
     const [labels, setLabels] = useState([]);
     const [file, setFile] = useState(null);
     const [input, setInput] = useState("");
+    const [error, setError] = useState("");
+    const [showError, setShowError] = useState(false);
 
     const handleClose = () => {
         setFileName("");
         setLabels([]);
         setFile(null);
         setInput("");
+        setError("");
+        setShowError(false);
         onClose();
     };
 
@@ -36,9 +41,9 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
             handleClose();
             if (onSaved) onSaved();
         } catch (err) {
-            alert(
-                "Upload failed: " + (err.response?.data?.message || err.message)
-            );
+            let msg = err.response?.data?.error || err.response?.data?.message || err.message || "Upload failed.";
+            setError(msg);
+            setShowError(true);
         }
     };
 
@@ -69,6 +74,14 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <h2 className="text-lg font-semibold mb-4">Upload File</h2>
+
+                {/* Error Alert */}
+                <AlertMessage
+                    message={error}
+                    type="error"
+                    show={showError}
+                    onClose={() => setShowError(false)}
+                />
 
                 <div className="mb-4">
                     <input

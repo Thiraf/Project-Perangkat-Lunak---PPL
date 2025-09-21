@@ -57,12 +57,37 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required_if:type,folder|string|max:255',
-            'type' => 'required|in:folder,file',
-            'parent_id' => 'nullable|exists:items,id',
-            'file' => 'required_if:type,file|file|max:10240', 
-        ]);
+
+        try {
+            $validated = $request->validate([
+                'name' => 'required_if:type,folder|string|max:255',
+                'type' => 'required|in:folder,file',
+                'parent_id' => 'nullable|exists:items,id',
+                'file' => [
+                    'required_if:type,file',
+                    'file',
+                    'max:10240', // 10 MB
+                    'mimes:jpg,jpeg,png,pdf,doc,docx,xlsx,xls,ppt,pptx,csv,txt', // allowed types
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->validator->errors();
+            if ($errors->has('file')) {
+                $fileErrors = $errors->get('file');
+                if (collect($fileErrors)->contains(fn($msg) => str_contains($msg, 'max'))) {
+                    return response()->json(['error' => 'File too large. Maximum size is 10MB.'], 413);
+                }
+                if (collect($fileErrors)->contains(fn($msg) => str_contains($msg, 'must be a file of type'))) {
+                    return response()->json(['error' => 'Invalid file type.'], 415);
+                }
+            }
+            return response()->json(['error' => $errors->first()], 422);
+        }
+
+        // Handle connection loss or timeout
+        if (!$request->hasFile('file') && ($validated['type'] ?? null) === 'file') {
+            return response()->json(['error' => 'File upload failed. Please check your connection or try again.'], 408);
+        }
 
         $user = Auth::user();
         $parentId = $validated['parent_id'] ?? null;
