@@ -36,7 +36,9 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
             handleClose();
             if (onSaved) onSaved();
         } catch (err) {
-            alert("Upload failed: " + (err.response?.data?.message || err.message));
+            alert(
+                "Upload failed: " + (err.response?.data?.message || err.message)
+            );
         }
     };
 
@@ -58,8 +60,14 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-lg w-96 p-6" onClick={(e) => e.stopPropagation()}>
+        <div
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-lg shadow-lg w-96 p-6"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <h2 className="text-lg font-semibold mb-4">Upload File</h2>
 
                 <div className="mb-4">
@@ -108,18 +116,33 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
                     </label>
                     {file ? (
                         <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-gray-50">
-                            <span className="inline-block max-w-[180px] overflow-hidden whitespace-nowrap text-ellipsis align-bottom" title={file.name}>{file.name}</span>
-                            <span className="text-xs text-gray-500">({Math.round(file.size / 1024)} KB)</span>
+                            <span
+                                className="inline-block max-w-[180px] overflow-hidden whitespace-nowrap text-ellipsis align-bottom"
+                                title={file.name}
+                            >
+                                {file.name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                                ({Math.round(file.size / 1024)} KB)
+                            </span>
                             <button
                                 className="ml-auto px-2 py-1 text-xs text-red-600 hover:text-red-800"
                                 onClick={() => setFile(null)}
-                            >Remove</button>
+                            >
+                                Remove
+                            </button>
                         </div>
                     ) : (
                         <Dropzone
-                            onDrop={(acceptedFiles) => setFile(acceptedFiles[0])}
+                            onDrop={(acceptedFiles) =>
+                                setFile(acceptedFiles[0])
+                            }
                         />
                     )}
+                    <p className="mt-2 text-xs text-gray-500">
+                        Maximum upload file size:{" "}
+                        <span className="font-semibold">10MB</span>
+                    </p>
                 </div>
 
                 <div className="flex justify-end">

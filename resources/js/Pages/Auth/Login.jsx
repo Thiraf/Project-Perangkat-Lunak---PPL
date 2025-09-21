@@ -96,7 +96,7 @@ export default function Login({ status }) {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md transition"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md transition"
                                 >
                                     Sign In
                                 </button>
@@ -110,7 +110,7 @@ export default function Login({ status }) {
                     <img
                         src="/images/login-bg.png"
                         alt="Login background"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain object-right"
                     />
                 </div>
             </div>
