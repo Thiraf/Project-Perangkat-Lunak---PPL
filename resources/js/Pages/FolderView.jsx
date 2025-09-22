@@ -7,7 +7,7 @@ import CustomSelect from "@/Components/CustomSelect";
 import ModalNewFolder from "@/Components/ModalNewFolder";
 import ModalUploadFile from "@/Components/ModalUploadFile";
 import FolderCard from "@/Components/FolderCard";
-import FileRow from "@/Components/FileRow.jsx";
+import FileRow from "@/Components/FileRow";
 import AlertMessage from "@/Components/AlertMessage";
 import LoadingOverlay from "@/Components/LoadingOverlay";
 import { ChevronDown, ChevronUp } from "lucide-react";
