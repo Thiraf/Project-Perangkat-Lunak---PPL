@@ -41,7 +41,11 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
             handleClose();
             if (onSaved) onSaved();
         } catch (err) {
+            console.log("Full server response:", err.response);
+
             let msg = err.response?.data?.error || err.response?.data?.message || err.message || "Upload failed.";
+
+            console.error(msg); // This should now show your custom message
             setError(msg);
             setShowError(true);
         }
@@ -67,7 +71,7 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
     return (
         <div
             className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
-            onClick={onClose}
+            onClick={handleClose}
         >
             <div
                 className="bg-white rounded-lg shadow-lg w-96 p-6"

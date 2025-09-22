@@ -22,7 +22,7 @@ export default function Login({ status }) {
             {/* Content */}
             <div className="flex flex-1 h-full overflow-hidden">
                 {/* Left side (Form) */}
-                <div className="w-full md:w-1/2 flex items-center justify-center bg-gray-50">
+                <div className="w-full md:w-1/2 flex items-center justify-center bg-gray-100">
                     <div className="max-w-md w-full p-8">
                         <h2 className="text-3xl font-bold mb-2">
                             Welcome back to DOKI!

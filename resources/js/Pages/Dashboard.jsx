@@ -103,6 +103,7 @@ export default function Dashboard({ auth }) {
         <AuthenticatedLayout user={auth.user}>
             <Head title="Dashboard" />
             {isLoading && <LoadingOverlay />}
+
             <AlertMessage
                 show={alert.show}
                 message={alert.message}
@@ -110,6 +111,7 @@ export default function Dashboard({ auth }) {
                 onClose={() => setAlert({ ...alert, show: false })}
                 onRetry={() => fetchItems()}
             />
+
             <h2 className="text-4xl font-semibold">Document</h2>
 
             <div className="mt-6">

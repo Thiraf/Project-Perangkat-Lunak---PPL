@@ -9,6 +9,13 @@ export default function ModalEdit({ isOpen, onClose, initialName, onSave }) {
 
     if (!isOpen) return null;
 
+    const handleClose = () => {
+        setNewName("");
+        setError("");
+        setShowError(false);
+        onClose();
+    };
+
     const handleSave = () => {
         if (newName.trim() !== "") {
             onSave(newName);
@@ -19,7 +26,7 @@ export default function ModalEdit({ isOpen, onClose, initialName, onSave }) {
     return (
         <div 
             className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 cursor-default" 
-            onClick={e => { e.stopPropagation(); onClose(); }}
+            onClick={e => { e.stopPropagation(); handleClose(); }}
         >
             <div className="bg-white rounded-lg shadow-lg w-96 p-6 cursor-default" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-lg font-semibold mb-4">Edit Name</h2>

@@ -77,14 +77,10 @@ class ItemController extends Controller
                 if (collect($fileErrors)->contains(fn($msg) => str_contains($msg, 'max'))) {
                     return response()->json(['error' => 'File too large. Maximum size is 10MB.'], 413);
                 }
-                if (collect($fileErrors)->contains(fn($msg) => str_contains($msg, 'must be a file of type'))) {
-                    return response()->json(['error' => 'Invalid file type.'], 415);
-                }
             }
             return response()->json(['error' => $errors->first()], 422);
         }
 
-        // Handle connection loss or timeout
         if (!$request->hasFile('file') && ($validated['type'] ?? null) === 'file') {
             return response()->json(['error' => 'File upload failed. Please check your connection or try again.'], 408);
         }

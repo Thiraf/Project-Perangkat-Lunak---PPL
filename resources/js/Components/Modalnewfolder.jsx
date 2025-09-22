@@ -64,7 +64,7 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50" onClick={onClose}>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50" onClick={handleClose}>
             <div className="bg-white rounded-lg shadow-lg w-96 p-6" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-lg font-semibold mb-4">New Folder</h2>
 
