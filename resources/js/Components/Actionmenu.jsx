@@ -36,9 +36,9 @@ export default function ActionMenu({ id, name, type, onRename, onDelete }) {
             </button>
 
             {menuOpen && (
-                <div 
+                <div
                     className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-md border z-10"
-                    onClick={e => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
                 >
                     <button
                         className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -91,7 +91,10 @@ export default function ActionMenu({ id, name, type, onRename, onDelete }) {
                         await axios.patch(`/items/${id}`, { name: newName });
                         if (onRename) onRename(newName);
                     } catch (err) {
-                        alert("Failed to rename item: " + (err.response?.data?.message || err.message));
+                        alert(
+                            "Failed to rename item: " +
+                                (err.response?.data?.message || err.message)
+                        );
                     }
                 }}
             />
@@ -106,7 +109,10 @@ export default function ActionMenu({ id, name, type, onRename, onDelete }) {
                         await axios.delete(`/items/${id}`);
                         if (onDelete) onDelete(id);
                     } catch (err) {
-                        alert("Failed to delete item: " + (err.response?.data?.message || err.message));
+                        alert(
+                            "Failed to delete item: " +
+                                (err.response?.data?.message || err.message)
+                        );
                     }
                 }}
             />
