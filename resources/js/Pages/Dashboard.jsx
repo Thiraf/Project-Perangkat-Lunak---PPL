@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import CustomSelect from "@/Components/CustomSelect";
 import ModalNewFolder from "@/Components/ModalNewFolder";
 import ModalUploadFile from "@/Components/ModalUploadFile";
-import FolderCard from "@/Components/FolderCard";
+import FolderCard from "@/Components/FolderCards";
 import FileRow from "@/Components/FileRow";
 import AlertMessage from "@/Components/AlertMessage";
 import LoadingOverlay from "@/Components/LoadingOverlay";
