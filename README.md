@@ -4,8 +4,6 @@ Follow these steps to run the project locally:
 
 ## Clone Repository
 
-To deploy this project run
-
 ```bash
 git clone <repo-url>
 cd <nama-folder-project>
@@ -13,21 +11,15 @@ cd <nama-folder-project>
 
 ## Install Dependency Laravel
 
-To deploy this project run
-
 ```bash
-  composer install
-
+composer install
 ```
 
 ## Setup Environment
 
-To deploy this project run
-
 ```bash
 cp .env.example .env
 php artisan key:generate
-
 ```
 
 ## Install Dependency Frontend
@@ -35,6 +27,19 @@ php artisan key:generate
 ```bash
 npm install
 npm install dayjs
+```
 
+## Setup the database
 
+If using SQLite, create the database file:
+
+```bash
+mkdir -p database
+touch database/database.sqlite
+```
+
+Then run migrations:
+
+```bash
+php artisan migrate
 ```
