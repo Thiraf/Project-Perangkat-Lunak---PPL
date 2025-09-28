@@ -1,3 +1,4 @@
+import PasswordField from "@/Components/PasswordField";
 import { useForm, Head } from "@inertiajs/react";
 
 export default function Login({ status }) {
@@ -58,22 +59,11 @@ export default function Login({ status }) {
                             </div>
 
                             {/* Password */}
-                            <div>
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={data.password}
-                                    onChange={(e) =>
-                                        setData("password", e.target.value)
-                                    }
-                                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                />
-                                {errors.password && (
-                                    <p className="text-sm text-red-600">
-                                        {errors.password}
-                                    </p>
-                                )}
-                            </div>
+                            <PasswordField 
+                                data={data} 
+                                setData={setData} 
+                                errors={errors} 
+                            />
 
                             {/* Remember Me */}
                             <div className="flex items-center justify-between mt-4">
