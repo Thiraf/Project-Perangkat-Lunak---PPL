@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('item_labels', function (Blueprint $table) {
             $table->foreignId('label_id')->constrained('labels')->onDelete('cascade');
-            $table->unsignedBigInteger('item_id');
-            $table->string('item_type'); // Untuk polymorphic, merujuk ke model Item
+            $table->foreignId('item_id')->constrained('items')->onDelete('cascade');
+            $table->string('item_type');
 
-            // Primary key gabungan untuk mencegah duplikasi label pada item yang sama
             $table->primary(['label_id', 'item_id', 'item_type']);
         });
     }
