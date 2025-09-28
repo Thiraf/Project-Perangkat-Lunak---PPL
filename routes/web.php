@@ -21,7 +21,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
@@ -38,6 +38,8 @@ Route::middleware('auth')->group(function () {
     Route::post('items/{item}/shares', [ItemShareController::class, 'store'])->name('items.shares.store');
     Route::patch('items/{item}/shares/{user}', [ItemShareController::class, 'update'])->name('items.shares.update');
     Route::delete('items/{item}/shares/{user}', [ItemShareController::class, 'destroy'])->name('items.shares.destroy');
+    
+    Route::get('/labels', [\App\Http\Controllers\LabelController::class, 'index']);
 });
 
 require __DIR__.'/auth.php';

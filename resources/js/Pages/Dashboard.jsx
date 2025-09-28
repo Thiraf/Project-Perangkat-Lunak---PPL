@@ -16,8 +16,8 @@ import PreviewModal from "@/Components/PreviewModal";
 export default function Dashboard({ auth }) {
     const [label, setLabel] = useState("");
     const [type, setType] = useState("");
-    const [filter, setFilter] = useState("");
     const [newItem, setNewItem] = useState("");
+    const [allLabels, setAllLabels] = useState([]);
 
     const [showModalNewFolder, setshowModalNewFolder] = useState(false);
     const [showModalUploadFile, setShowModalUploadFile] = useState(false);
@@ -33,10 +33,14 @@ export default function Dashboard({ auth }) {
     });
     const [previewFile, setPreviewFile] = useState(null);
 
-    const fetchItems = useCallback((alertMsg = null) => {
+    const fetchItems = useCallback((alertMsg = null, labelFilter = "") => {
         setIsLoading(true);
+        let url = "/items";
+        if (labelFilter) {
+            url += `?label=${encodeURIComponent(labelFilter)}`;
+        }
         axios
-            .get("/items")
+            .get(url)
             .then((res) => {
                 const items = res.data;
                 setFolders(items.filter((item) => item.type === "folder"));
@@ -54,11 +58,30 @@ export default function Dashboard({ auth }) {
                 setAlert({
                     show: true,
                     message: "Oops! Something went wrong.",
-                    type: "error", // ini otomatis trigger modal
+                    type: "error",
                 });
             })
             .finally(() => {
                 setIsLoading(false);
+            });
+    }, []);
+
+    const fetchLabels = useCallback(() => {
+        axios
+            .get("/labels")
+            .then((res) => {
+                const formattedLabels = res.data.map((label) => ({
+                    value: label.name,
+                    label: label.name,
+                }));
+                setAllLabels([
+                    { value: '', label: 'none' },
+                    ...formattedLabels,
+                ]);
+            })
+            .catch((err) => {
+                console.error("Failed to fetch labels:", err);
+                setAllLabels([]);
             });
     }, []);
 
@@ -71,10 +94,6 @@ export default function Dashboard({ auth }) {
             setNewItem("");
         }
     }, [newItem]);
-
-    useEffect(() => {
-        fetchItems();
-    }, [fetchItems]);
 
     const handleItemClick = (item) => {
         if (item.type === "folder") {
@@ -97,6 +116,11 @@ export default function Dashboard({ auth }) {
             });
     };
 
+    useEffect(() => {
+        fetchItems(null, label);
+        fetchLabels();
+    }, [fetchItems, fetchLabels, label]);
+
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Dashboard" />
@@ -115,11 +139,12 @@ export default function Dashboard({ auth }) {
             <div className="mt-6">
                 <div className="mt-4 flex items-center">
                     <div className="flex space-x-2">
+
                         <CustomSelect
-                            label="Choose label"
+                            label="Filter by Label"
                             value={label}
                             onChange={setLabel}
-                            options={[{ value: "memo", label: "Memo" }]}
+                            options={allLabels}
                         />
 
                         <CustomSelect
@@ -127,30 +152,17 @@ export default function Dashboard({ auth }) {
                             value={type}
                             onChange={setType}
                             options={[
-                                {
-                                    value: "docx",
-                                    label: "DOCX",
-                                    image: "/images/docx.png",
-                                },
-                                {
-                                    value: "csv",
-                                    label: "CSV",
-                                    image: "/images/csv.png",
-                                },
-                                {
-                                    value: "pptx",
-                                    label: "PPTX",
-                                    image: "/images/pptx.png",
-                                },
-                                {
-                                    value: "pdf",
-                                    label: "PDF",
-                                    image: "/images/pdf.png",
-                                },
+                                { value: '', label: 'All',},
+                                { value: 'application/pdf', label: 'PDF', image: '/images/pdf.png' },
+                                { value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', label: 'DOCX', image: '/images/docx.png' },
+                                // { value: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', label: 'XLSX', image: '/images/xlsx.png' },
+                                { value: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', label: 'PPTX', image: '/images/pptx.png' },
+                                { value: 'text/csv', label: 'CSV', image: '/images/csv.png' },
+                                // { value: 'text/plain', label: 'TXT', image: '/images/file.png' },
                             ]}
                         />
 
-                        <CustomSelect
+                        {/* <CustomSelect
                             label="Filter"
                             value={filter}
                             onChange={setFilter}
@@ -158,7 +170,7 @@ export default function Dashboard({ auth }) {
                                 { value: "project", label: "Project" },
                                 { value: "subproject", label: "Sub-Project" },
                             ]}
-                        />
+                        /> */}
                     </div>
 
                     <div className="ml-auto">
@@ -281,6 +293,7 @@ export default function Dashboard({ auth }) {
                     </thead>
                     <tbody>
                         {[...files]
+                            .filter((file) => !type || file.mime_type === type)
                             .sort((a, b) => {
                                 const dateA = new Date(
                                     a.updated_at || a.created_at

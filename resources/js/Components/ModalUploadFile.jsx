@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import axios from "axios";
 import Dropzone from "@/Components/Dropzone";
 import AlertMessage from "@/Components/AlertMessage";
 
 export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
     const [fileName, setFileName] = useState("");
-    const [labels, setLabels] = useState([]);
+    const [labels, setLabels] = useState([]); // selected labels
+    const [allLabels, setAllLabels] = useState([]); // all labels from db
     const [file, setFile] = useState(null);
-    const [input, setInput] = useState("");
     const [error, setError] = useState("");
     const [showError, setShowError] = useState(false);
 
@@ -15,11 +16,21 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
         setFileName("");
         setLabels([]);
         setFile(null);
-        setInput("");
         setError("");
         setShowError(false);
         onClose();
     };
+
+
+    // Fetch labels from backend when modal opens
+    useEffect(() => {
+        if (!isOpen) return;
+        axios.get("/labels")
+            .then(res => {
+                setAllLabels(res.data);
+            })
+            .catch(() => setAllLabels([]));
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -32,6 +43,12 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
         if (parentId) {
             formData.append("parent_id", parentId);
         }
+
+        if (labels.length > 0) {
+            labels.forEach((label) => {
+                formData.append("labels[]", label.id);
+            });
+        }
         try {
             await axios.post("/items", formData, {
                 headers: {
@@ -42,25 +59,19 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
             if (onSaved) onSaved();
         } catch (err) {
             console.log("Full server response:", err.response);
-
             let msg = err.response?.data?.error || err.response?.data?.message || err.message || "Upload failed.";
-
-            console.error(msg); // This should now show your custom message
+            console.error(msg);
             setError(msg);
             setShowError(true);
         }
     };
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter" && input.trim() !== "") {
-            e.preventDefault();
-            if (!labels.includes(input.trim())) {
-                setLabels([...labels, input.trim()]);
-            }
-            setInput("");
-        }
-        if (e.key === "Backspace" && input === "" && labels.length > 0) {
-            setLabels(labels.slice(0, -1));
+    const handleLabelSelect = (e) => {
+        const selectedId = parseInt(e.target.value);
+        if (!selectedId) return;
+        const found = allLabels.find((l) => l.id === selectedId);
+        if (found && !labels.some((l) => l.id === found.id)) {
+            setLabels([...labels, found]);
         }
     };
 
@@ -87,7 +98,7 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
                     onClose={() => setShowError(false)}
                 />
 
-                <div className="mb-4">
+                {/* <div className="mb-4">
                     <input
                         type="text"
                         placeholder="File Name"
@@ -95,40 +106,11 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
                         onChange={(e) => setFileName(e.target.value)}
                         className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                </div>
+                </div> */}
+
 
                 <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1">
-                        Labels
-                    </label>
-                    <div className="w-full border rounded-md px-2 py-2 flex flex-wrap gap-2">
-                        {labels.map((tag, i) => (
-                            <span
-                                key={i}
-                                className="flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm"
-                            >
-                                {tag}
-                                <button
-                                    onClick={() => removeLabel(i)}
-                                    className="ml-1 text-blue-500 hover:text-blue-700"
-                                >
-                                    ✕
-                                </button>
-                            </span>
-                        ))}
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Add label..."
-                            className="flex-1 min-w-[80px] bg-transparent outline-none text-sm border-none"
-                        />
-                    </div>
-                </div>
-
-                <div className="mb-4">
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-medium">
                         File
                     </label>
                     {file ? (
@@ -160,6 +142,38 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
                         Maximum upload file size:{" "}
                         <span className="font-semibold">10MB</span>
                     </p>
+                </div>
+
+                <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">
+                        Labels
+                    </label>
+                    <div className="w-full border rounded-md px-2 py-2 flex flex-wrap gap-2">
+                        {labels.map((label, i) => (
+                            <span
+                                key={label.id}
+                                className="flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm"
+                            >
+                                {label.name}
+                                <button
+                                    onClick={() => removeLabel(i)}
+                                    className="ml-1 text-blue-500 hover:text-blue-700"
+                                >
+                                    ✕
+                                </button>
+                            </span>
+                        ))}
+                        <select
+                            className="flex-1 min-w-[80px] bg-transparent outline-none text-sm border-none"
+                            onChange={handleLabelSelect}
+                            value=""
+                        >
+                            <option value="">Add label...</option>
+                            {allLabels.filter(l => !labels.some(sel => sel.id === l.id)).map((label) => (
+                                <option key={label.id} value={label.id}>{label.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <div className="flex justify-end">

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class ItemController extends Controller
 {
@@ -18,16 +19,33 @@ class ItemController extends Controller
     {
         $user = Auth::user();
         $parentId = $request->input('parent_id', null);
+        $label = $request->input('label', null);
 
-        $items = Item::where(function($q) use ($user) {
-                $q->where('owner_id', $user->id)
-                  ->orWhereHas('sharedWithUsers', function($q2) use ($user) {
-                      $q2->where('users.id', $user->id);
-                  });
-            })
-            ->where('parent_id', $parentId)
-            ->with('owner')
-            ->get();
+        $query = Item::where(function($q) use ($user) {
+            $q->where('owner_id', $user->id)
+              ->orWhereHas('sharedWithUsers', function($q2) use ($user) {
+                  $q2->where('users.id', $user->id);
+              });
+        });
+
+        if (!is_null($parentId)) {
+            $query = $query->where('parent_id', $parentId);
+        }
+
+        if ($label) {
+            $query = $query->whereIn('id', function($sub) use ($label) {
+                $sub->select('item_id')
+                    ->from('item_labels')
+                    ->where('item_type', 'file')
+                    ->whereIn('label_id', function($labelSub) use ($label) {
+                        $labelSub->select('id')
+                            ->from('labels')
+                            ->where('name', $label);
+                    });
+            });
+        }
+
+        $items = $query->with('owner')->get();
 
         $items = $items->map(function ($item) use ($user) {
             $itemArr = $item->toArray();
@@ -138,6 +156,18 @@ class ItemController extends Controller
         }
 
         $item = Item::create($itemData);
+
+        $labelIds = $request->input('labels', $request->input('labels', []));
+        if (!empty($labelIds) && is_array($labelIds)) {
+            $itemType = isset($item->type) ? $item->type : null;
+            foreach ($labelIds as $labelId) {
+                DB::table('item_labels')->insert([
+                    'label_id' => $labelId,
+                    'item_id' => $item->id,
+                    'item_type' => $itemType,
+                ]);
+            }
+        }
 
         if ($parentId) {
             $parentFolder = Item::where('id', $parentId)->where('type', 'folder')->first();
