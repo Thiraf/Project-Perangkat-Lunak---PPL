@@ -1,22 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import AlertMessage from "@/Components/AlertMessage";
 
 export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
     const [folderName, setFolderName] = useState("");
-    const [labels, setLabels] = useState([]);
-    const [input, setInput] = useState("");
+    const [labels, setLabels] = useState([]); // selected labels
+    const [allLabels, setAllLabels] = useState([]); // all labels from db
     const [error, setError] = useState("");
     const [showError, setShowError] = useState(false);
 
     const handleClose = () => {
         setFolderName("");
         setLabels([]);
-        setInput("");
         setError("");
         setShowError(false);
         onClose();
     };
+
+    // Fetch labels from backend when modal opens
+    useEffect(() => {
+        if (!isOpen) return;
+        axios.get("/labels")
+            .then(res => {
+                setAllLabels(res.data);
+            })
+            .catch(() => setAllLabels([]));
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -29,7 +38,9 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
             formData.append("parent_id", parentId);
         }
         if (labels.length > 0) {
-            formData.append("labels", JSON.stringify(labels));
+            labels.forEach((label) => {
+                formData.append("labels[]", label.id);
+            });
         }
         try {
             await axios.post("/items", formData, {
@@ -50,16 +61,12 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
         }
     };
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter" && input.trim() !== "") {
-            e.preventDefault();
-            if (!labels.includes(input.trim())) {
-                setLabels([...labels, input.trim()]);
-            }
-            setInput("");
-        }
-        if (e.key === "Backspace" && input === "" && labels.length > 0) {
-            setLabels(labels.slice(0, -1));
+    const handleLabelSelect = (e) => {
+        const selectedId = parseInt(e.target.value);
+        if (!selectedId) return;
+        const found = allLabels.find((l) => l.id === selectedId);
+        if (found && !labels.some((l) => l.id === found.id)) {
+            setLabels([...labels, found]);
         }
     };
 
@@ -101,12 +108,12 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
                         Labels
                     </label>
                     <div className="w-full border rounded-md px-2 py-2 flex flex-wrap gap-2">
-                        {labels.map((tag, i) => (
+                        {labels.map((label, i) => (
                             <span
-                                key={i}
+                                key={label.id}
                                 className="flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm"
                             >
-                                {tag}
+                                {label.name}
                                 <button
                                     onClick={() => removeLabel(i)}
                                     className="ml-1 text-blue-500 hover:text-blue-700"
@@ -115,14 +122,16 @@ export default function ModalNewFolder({ isOpen, onClose, onSaved, parentId }) {
                                 </button>
                             </span>
                         ))}
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Add label..."
+                        <select
                             className="flex-1 min-w-[80px] bg-transparent outline-none text-sm border-none"
-                        />
+                            onChange={handleLabelSelect}
+                            value=""
+                        >
+                            <option value="">Add label...</option>
+                            {allLabels.filter(l => !labels.some(sel => sel.id === l.id)).map((label) => (
+                                <option key={label.id} value={label.id}>{label.name}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 

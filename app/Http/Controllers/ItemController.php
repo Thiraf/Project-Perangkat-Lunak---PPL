@@ -36,7 +36,7 @@ class ItemController extends Controller
             $query = $query->whereIn('id', function($sub) use ($label) {
                 $sub->select('item_id')
                     ->from('item_labels')
-                    ->where('item_type', 'file')
+                    // ->where('item_type', 'file')
                     ->whereIn('label_id', function($labelSub) use ($label) {
                         $labelSub->select('id')
                             ->from('labels')

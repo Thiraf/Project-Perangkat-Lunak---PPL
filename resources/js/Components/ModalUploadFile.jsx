@@ -21,7 +21,6 @@ export default function ModalNewFile({ isOpen, onClose, onSaved, parentId }) {
         onClose();
     };
 
-
     // Fetch labels from backend when modal opens
     useEffect(() => {
         if (!isOpen) return;
