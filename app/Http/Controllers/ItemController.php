@@ -157,6 +157,66 @@ class ItemController extends Controller
     /**
      * Display the specified resource.
      */
+    public function search(Request $request)
+    {
+        $user = Auth::user();
+        $q = trim($request->input('q', ''));
+
+        if ($q === '') {
+            return response()->json(['folders' => [], 'files' => []]);
+        }
+
+        $folders = Item::where(function($q) use ($user) {
+                $q->where('owner_id', $user->id)
+                    ->orWhereHas('sharedWithUsers', function($q2) use ($user) {
+                        $q2->where('users.id', $user->id);
+                    });
+            })
+            ->where('type', 'folder')
+            ->where('name', 'like', '%' . $q . '%')
+            ->orderBy('name')
+            ->limit(10)
+            ->get(['id', 'name', 'owner_id']);
+
+        $files = Item::where(function($q) use ($user) {
+                $q->where('owner_id', $user->id)
+                    ->orWhereHas('sharedWithUsers', function($q2) use ($user) {
+                        $q2->where('users.id', $user->id);
+                    });
+            })
+            ->where('type', 'file')
+            ->where('name', 'like', '%' . $q . '%')
+            ->orderBy('name')
+            ->limit(10)
+            ->with('parent:id,name')
+            ->get(['id', 'name', 'owner_id', 'parent_id']);
+
+        // include parent folder name in the response for UI convenience
+        $files = $files->map(function ($f) {
+            // prefer the eager-loaded relation if present
+            $parentName = null;
+            if ($f->relationLoaded('parent') && $f->parent) {
+                $parentName = $f->parent->name;
+            } elseif ($f->parent_id) {
+                $parentName = Item::where('id', $f->parent_id)->value('name');
+            }
+
+            return [
+                'id' => $f->id,
+                'name' => $f->name,
+                'owner_id' => $f->owner_id,
+                'parent_id' => $f->parent_id,
+                'parent_name' => $parentName,
+                'type' => 'file',
+            ];
+        });
+
+        return response()->json([
+            'folders' => $folders,
+            'files' => $files,
+        ]);
+    }
+
     public function show(string $id)
     {
         $user = Auth::user();

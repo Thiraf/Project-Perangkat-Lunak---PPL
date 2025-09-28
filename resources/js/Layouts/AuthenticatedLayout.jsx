@@ -1,6 +1,7 @@
 import { Link, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import { Search } from "lucide-react";
+import SidebarSearch from "@/Components/SidebarSearch";
 
 import { Home, User, LogOut, FileText, Tag, Settings } from "lucide-react";
 
@@ -89,14 +90,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
                     <nav className="flex-1 px-2 space-y-2">
                         {sidebarOpen && (
-                            <div className="relative mb-4">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                                />
-                            </div>
+                            <SidebarSearch />
                         )}
 
                         <Link
@@ -107,13 +101,13 @@ export default function AuthenticatedLayout({ header, children }) {
                             {sidebarOpen && <span>Home</span>}
                         </Link>
 
-                        <Link
+                        {/* <Link
                             href={route("dashboard")}
                             className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
                         >
                             <FileText className="h-5 w-5" />
                             {sidebarOpen && <span>Document</span>}
-                        </Link>
+                        </Link> */}
 
                         <Link
                             href={route("profile.edit")}
@@ -131,13 +125,13 @@ export default function AuthenticatedLayout({ header, children }) {
                             {sidebarOpen && <span>Setting</span>}
                         </Link>
 
-                        <Link
+                        {/* <Link
                             href={route("profile.edit")}
                             className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
                         >
                             <User className="h-5 w-5" />
                             {sidebarOpen && <span>User</span>}
-                        </Link>
+                        </Link> */}
                     </nav>
                 </aside>
 

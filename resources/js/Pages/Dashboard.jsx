@@ -77,8 +77,6 @@ export default function Dashboard({ auth }) {
     }, [fetchItems]);
 
     const handleItemClick = (item) => {
-        console.log("Item clicked:", item);
-
         if (item.type === "folder") {
             window.location.href = `/${auth.user.id}/folders/${item.id}`;
             return;
@@ -240,7 +238,7 @@ export default function Dashboard({ auth }) {
             </div>
 
             {/* Tombol simulasi error */}
-            <div className="mb-4">
+            {/* <div className="mb-4">
                 <button
                     onClick={() =>
                         setAlert({
@@ -253,7 +251,7 @@ export default function Dashboard({ auth }) {
                 >
                     🔥 Trigger Error Alert
                 </button>
-            </div>
+            </div> */}
 
             <div className="mt-8">
                 <h3 className="text-xl font-semibold mb-4">Files</h3>
