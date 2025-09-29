@@ -17,6 +17,7 @@ class ItemController extends Controller
      */
     public function index(Request $request)
     {
+
         $user = Auth::user();
         $parentId = $request->input('parent_id', null);
         $label = $request->input('label', null);
@@ -28,15 +29,17 @@ class ItemController extends Controller
               });
         });
 
-        if (!is_null($parentId)) {
+        // Only show top-level items unless parent_id is provided
+        if ($parentId !== null) {
             $query = $query->where('parent_id', $parentId);
+        } else {
+            $query = $query->whereNull('parent_id');
         }
 
         if ($label) {
             $query = $query->whereIn('id', function($sub) use ($label) {
                 $sub->select('item_id')
                     ->from('item_labels')
-                    // ->where('item_type', 'file')
                     ->whereIn('label_id', function($labelSub) use ($label) {
                         $labelSub->select('id')
                             ->from('labels')
