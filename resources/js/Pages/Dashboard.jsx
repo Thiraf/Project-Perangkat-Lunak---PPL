@@ -288,6 +288,7 @@ export default function Dashboard({ auth }) {
                                 )}
                             </th>
                             <th className="py-2 px-3">File Size</th>
+                            <th className="py-2 px-3">Label</th>
                             <th className="py-2 px-3"></th>
                         </tr>
                     </thead>
@@ -325,6 +326,7 @@ export default function Dashboard({ auth }) {
                                     )} ${ownerName}`;
                                 }
                                 const canEdit = file.owner_id === auth.user.id;
+                                console.log('File labels:', file.labels);
                                 return (
                                     <FileRow
                                         id={file.id}
@@ -340,7 +342,7 @@ export default function Dashboard({ auth }) {
                                                   )} KB`
                                                 : ""
                                         }
-                                        path={file.path}
+                                        labels={file.labels}
                                         onShare={() => {
                                             fetchItems(
                                                 "File shared successfully"

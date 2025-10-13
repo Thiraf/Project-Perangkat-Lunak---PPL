@@ -17,7 +17,6 @@ class ItemController extends Controller
      */
     public function index(Request $request)
     {
-
         $user = Auth::user();
         $parentId = $request->input('parent_id', null);
         $label = $request->input('label', null);
@@ -59,6 +58,16 @@ class ItemController extends Controller
                 $share = \App\Models\Share::where('item_id', $item->id)->where('user_id', $user->id)->first();
                 $itemArr['shared_permission'] = $share ? $share->permission : null;
             }
+            $itemArr['labels'] = DB::table('item_labels')
+                ->join('labels', 'item_labels.label_id', '=', 'labels.id')
+                ->where('item_labels.item_id', $item->id)
+                ->get(['labels.name as name', 'labels.color as color'])
+                ->map(function($label) {
+                    return [
+                        'name' => $label->name,
+                        'color' => $label->color
+                    ];
+                });
             return $itemArr;
         });
 

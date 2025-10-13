@@ -11,7 +11,7 @@ class LabelController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $labels = Label::where('user_id', $user->id)->get(['id', 'name', 'color']);
+        $labels = Label::get(['id', 'name', 'color']);
         return response()->json($labels);
     }
 }
