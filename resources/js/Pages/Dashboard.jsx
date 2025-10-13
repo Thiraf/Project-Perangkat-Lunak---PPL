@@ -326,7 +326,6 @@ export default function Dashboard({ auth }) {
                                     )} ${ownerName}`;
                                 }
                                 const canEdit = file.owner_id === auth.user.id;
-                                console.log('File labels:', file.labels);
                                 return (
                                     <FileRow
                                         id={file.id}

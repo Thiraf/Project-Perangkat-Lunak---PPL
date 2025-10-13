@@ -34,7 +34,6 @@ class LabelSeeder extends Seeder
 
         $data = array_map(function ($label) use ($user) {
             return [
-                'user_id' => $user->id,
                 'name' => $label['name'],
                 'color' => $label['color'],
                 'created_at' => now(),

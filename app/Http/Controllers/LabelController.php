@@ -10,7 +10,6 @@ class LabelController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
         $labels = Label::get(['id', 'name', 'color']);
         return response()->json($labels);
     }
