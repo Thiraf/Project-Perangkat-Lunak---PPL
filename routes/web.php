@@ -38,8 +38,13 @@ Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit')
     Route::post('items/{item}/shares', [ItemShareController::class, 'store'])->name('items.shares.store');
     Route::patch('items/{item}/shares/{user}', [ItemShareController::class, 'update'])->name('items.shares.update');
     Route::delete('items/{item}/shares/{user}', [ItemShareController::class, 'destroy'])->name('items.shares.destroy');
-    
+
     Route::get('/labels', [\App\Http\Controllers\LabelController::class, 'index']);
+
+    // Tags page (Inertia)
+    Route::get('/tags', function () {
+        return Inertia::render('Tags');
+    })->name('tags.index');
 });
 
 require __DIR__.'/auth.php';
