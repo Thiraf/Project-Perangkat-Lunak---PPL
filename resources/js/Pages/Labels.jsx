@@ -1,12 +1,21 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { Edit, Trash } from "lucide-react";
 import ModalTag from "@/Components/ModalTag";
+import LoadingOverlay from "@/Components/LoadingOverlay";
+import ModalDelete from "@/Components/Modaldelete";
 
-export default function Tags() {
-    const [tags, setTags] = useState([]);
+const hexToRgba = (hex, alpha) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+export default function Labels() {
+    const [labels, setLabels] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -18,23 +27,25 @@ export default function Tags() {
         setLoading(true);
         axios
             .get("/labels")
-            .then((res) => setTags(res.data || []))
-            .catch(() => setError("Failed to load tags."))
+            .then((res) => setLabels(res.data || []))
+            .catch(() => setError("Failed to load labels."))
             .finally(() => setLoading(false));
     }, []);
 
-    const total = tags.length;
+    const total = labels.length;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const currentPage = Math.min(page, totalPages);
     const start = (currentPage - 1) * pageSize;
     const end = Math.min(total, start + pageSize);
-    const pageData = useMemo(() => tags.slice(start, end), [tags, start, end]);
+    const pageData = useMemo(() => labels.slice(start, end), [labels, start, end]);
 
     const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
 
     // modal states
     const [showModal, setShowModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [editing, setEditing] = useState(null);
+    const [deletingTag, setDeletingTag] = useState(null);
 
     const openNew = () => {
         setEditing(null);
@@ -45,34 +56,45 @@ export default function Tags() {
         setShowModal(true);
     };
 
-    const handleSave = (payload) => {
-        // For now, update client-side list only.
-        if (payload.id) {
-            setTags((prev) =>
-                prev.map((t) =>
-                    t.id === payload.id ? { ...t, ...payload } : t
-                )
-            );
-        } else {
-            const newId = Math.max(0, ...tags.map((t) => t.id || 0)) + 1;
-            setTags((prev) => [{ id: newId, ...payload }, ...prev]);
+    const handleSave = async (payload) => {
+        setLoading(true);
+        try {
+            if (payload.id) {
+                // Update existing label
+                await axios.put(`/labels/${payload.id}`, payload);
+            }
+            // Refresh the labels list after successful save
+            const response = await axios.get("/labels");
+            setLabels(response.data || []);
             // reset to first page to see the new item
             setPage(1);
+        } catch (err) {
+            console.error("Failed to save label:", err);
+            setError(err.response?.data?.message || "Failed to save label");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="Tags" />
+            <Head title="Labels" />
+            {loading && <LoadingOverlay />}
+
+            {error && (
+                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                </div>
+            )}
 
             <div className="mb-4">
-                <h2 className="text-2xl font-semibold mb-2">Tags</h2>
+                <h2 className="text-2xl font-semibold mb-2">Labels</h2>
                 <button
                     type="button"
                     className="px-3 py-1.5 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
                     onClick={openNew}
                 >
-                    + Add Tag
+                    + Add Label
                 </button>
             </div>
 
@@ -95,7 +117,7 @@ export default function Tags() {
                                     Name
                                 </th>
                                 <th className="px-6 py-3 text-left font-medium">
-                                    Desc
+                                    Color
                                 </th>
                                 <th className="px-6 py-3 text-center font-medium">
                                     Action
@@ -116,7 +138,21 @@ export default function Tags() {
                                         {t.name}
                                     </td>
                                     <td className="px-6 py-3 align-middle break-words">
-                                        {t.description ?? "-"}
+                                        <span
+                                            style={{
+                                                backgroundColor: t.color
+                                                    ? hexToRgba(t.color, 0.3)
+                                                    : "#eee",
+                                                color: "#222",
+                                                borderRadius: "4px",
+                                                padding: "2px 6px",
+                                                marginRight: "4px",
+                                                fontSize: "0.85em",
+                                                display: "inline-block"
+                                            }}
+                                        >
+                                            {t.color}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-3 text-center">
                                         <div className="flex justify-center space-x-2 whitespace-nowrap">
@@ -130,21 +166,8 @@ export default function Tags() {
                                             <button
                                                 className="inline-flex items-center px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700"
                                                 onClick={() => {
-                                                    if (
-                                                        confirm(
-                                                            `Delete tag "${t.name}"?`
-                                                        )
-                                                    ) {
-                                                        setTags(
-                                                            tags.filter(
-                                                                (x) =>
-                                                                    (x.id ??
-                                                                        x.name) !==
-                                                                    (t.id ??
-                                                                        t.name)
-                                                            )
-                                                        );
-                                                    }
+                                                    setDeletingTag(t);
+                                                    setShowDeleteModal(true);
                                                 }}
                                             >
                                                 <Trash className="h-3.5 w-3.5 mr-1" />{" "}
@@ -204,6 +227,32 @@ export default function Tags() {
                 onClose={() => setShowModal(false)}
                 onSave={handleSave}
                 initial={editing}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <ModalDelete
+                isOpen={showDeleteModal}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setDeletingTag(null);
+                }}
+                onConfirm={async () => {
+                    setLoading(true);
+                    try {
+                        await axios.delete(`/labels/${deletingTag.id}`);
+                        // Refresh the list after successful delete
+                        const response = await axios.get("/labels");
+                        setLabels(response.data || []);
+                        setError("");
+                    } catch (err) {
+                        console.error("Failed to delete label:", err);
+                        setError("Failed to delete label. Please try again.");
+                    } finally {
+                        setLoading(false);
+                        setDeletingTag(null);
+                    }
+                }}
+                itemName={deletingTag?.name}
             />
         </AuthenticatedLayout>
     );

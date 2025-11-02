@@ -39,12 +39,16 @@ Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit')
     Route::patch('items/{item}/shares/{user}', [ItemShareController::class, 'update'])->name('items.shares.update');
     Route::delete('items/{item}/shares/{user}', [ItemShareController::class, 'destroy'])->name('items.shares.destroy');
 
-    Route::get('/labels', [\App\Http\Controllers\LabelController::class, 'index']);
+    // Labels API routes
+    Route::get('/labels', [\App\Http\Controllers\LabelController::class, 'index'])->name('labels.index');
+    Route::post('/labels', [\App\Http\Controllers\LabelController::class, 'store'])->name('labels.store');
+    Route::put('/labels/{label}', [\App\Http\Controllers\LabelController::class, 'update'])->name('labels.update');
+    Route::delete('/labels/{label}', [\App\Http\Controllers\LabelController::class, 'destroy'])->name('labels.destroy');
 
     // Tags page (Inertia)
-    Route::get('/tags', function () {
-        return Inertia::render('Tags');
-    })->name('tags.index');
+    Route::get('/label', function () {
+        return Inertia::render('Labels');
+    })->name('label.index');
 });
 
 require __DIR__.'/auth.php';

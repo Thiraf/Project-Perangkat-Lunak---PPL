@@ -18,6 +18,7 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
     const [type, setType] = useState("");
     const [filter, setFilter] = useState("");
     const [newItem, setNewItem] = useState("");
+    const [allLabels, setAllLabels] = useState([]);
 
     const [showModalNewFolder, setshowModalNewFolder] = useState(false);
     const [showModalUploadFile, setShowModalUploadFile] = useState(false);
@@ -42,10 +43,15 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
         folder.owner_id === auth.user.id || folder.permission === "editor";
 
     const fetchItems = useCallback(
-        (alertMsg = null) => {
+        (alertMsg = null, labelFilter = "") => {
             setIsLoading(true);
+            let url = "/items";
+            const params = { parent_id: folder.id };
+            if (labelFilter) {
+                params.label = labelFilter;
+            }
             axios
-                .get("/items", { params: { parent_id: folder.id } })
+                .get(url, { params })
                 .then((res) => {
                     const items = res.data;
                     setFolders(items.filter((item) => item.type === "folder"));
@@ -62,7 +68,7 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
                     console.error("Failed to fetch items:", err);
                     setAlert({
                         show: true,
-                        message: "An error occurred.",
+                        message: "Oops! Something went wrong.",
                         type: "error",
                     });
                 })
@@ -72,6 +78,25 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
         },
         [folder.id]
     );
+
+    const fetchLabels = useCallback(() => {
+        axios
+            .get("/labels")
+            .then((res) => {
+                const formattedLabels = res.data.map((label) => ({
+                    value: label.name,
+                    label: label.name,
+                }));
+                setAllLabels([
+                    { value: '', label: 'none' },
+                    ...formattedLabels,
+                ]);
+            })
+            .catch((err) => {
+                console.error("Failed to fetch labels:", err);
+                setAllLabels([]);
+            });
+    }, []);
 
     useEffect(() => {
         if (newItem === "newfolder") {
@@ -84,10 +109,11 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
     }, [newItem]);
 
     useEffect(() => {
-        setFolders(items.filter((item) => item.type === "folder"));
-        setFiles(items.filter((item) => item.type === "file"));
-    }, [items]);
+        fetchItems(null, label);
+        fetchLabels();
+    }, [fetchItems, fetchLabels, label]);
 
+    
     const handleItemClick = (item) => {
         if (item.type === "folder") {
             window.location.href = `/${auth.user.id}/folders/${item.id}`;
@@ -183,10 +209,10 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
                 <div className="mt-4 flex items-center">
                     <div className="flex space-x-2">
                         <CustomSelect
-                            label="Choose label"
+                            label="Filter by Label"
                             value={label}
                             onChange={setLabel}
-                            options={[{ value: "memo", label: "Memo" }]}
+                            options={allLabels}
                         />
 
                         <CustomSelect
@@ -194,26 +220,11 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
                             value={type}
                             onChange={setType}
                             options={[
-                                {
-                                    value: "docx",
-                                    label: "DOCX",
-                                    image: "/images/docx.png",
-                                },
-                                {
-                                    value: "csv",
-                                    label: "CSV",
-                                    image: "/images/csv.png",
-                                },
-                                {
-                                    value: "pptx",
-                                    label: "PPTX",
-                                    image: "/images/pptx.png",
-                                },
-                                {
-                                    value: "pdf",
-                                    label: "PDF",
-                                    image: "/images/pdf.png",
-                                },
+                                { value: '', label: 'All'},
+                                { value: 'application/pdf', label: 'PDF', image: '/images/pdf.png' },
+                                { value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', label: 'DOCX', image: '/images/docx.png' },
+                                { value: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', label: 'PPTX', image: '/images/pptx.png' },
+                                { value: 'text/csv', label: 'CSV', image: '/images/csv.png' },
                             ]}
                         />
 
@@ -320,11 +331,12 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
                                 )}
                             </th>
                             <th className="py-2 px-3">File Size</th>
-                            <th className="py-2 px-3"></th>
+                            <th className="py-2 px-3">Label</th>
                         </tr>
                     </thead>
                     <tbody>
                         {[...files]
+                            .filter((file) => !type || file.mime_type === type)
                             .sort((a, b) => {
                                 const dateA = new Date(
                                     a.updated_at || a.created_at
@@ -375,6 +387,7 @@ export default function FolderView({ auth, folder, items, breadcrumb }) {
                                                 : ""
                                         }
                                         path={file.path}
+                                        labels={file.labels}
                                         onDelete={() =>
                                             fetchItems(
                                                 "File deleted successfully"
